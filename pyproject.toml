@@ -1,0 +1,24 @@
+[tool.pdm]
+
+[project]
+name = "cherino"
+version = "0.1.0"
+description = "telegram group manager for exloli"
+authors = [
+    {name = "Aloxaf", email = "Aloxafx@gmail.com"},
+]
+dependencies = [
+    "aiogram==3.0.0b7",
+    "pydantic>=1.10.5",
+    "tomlkit>=0.11.6",
+    "peewee>=3.15.4",
+    "apscheduler>=3.10.0",
+    "cachetools>=5.3.0",
+    "asyncache>=0.3.1",
+    "loguru>=0.6.0",
+]
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+[project.scripts]
+cherino = "cherino.main:main"
