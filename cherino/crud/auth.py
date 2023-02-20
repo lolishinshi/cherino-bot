@@ -2,10 +2,12 @@ from typing import Optional
 
 from peewee import fn
 
-from cherino.database.models import Question, Answer, AnswerHistory
+from cherino.database.models import Question, Answer, AnswerHistory, PendingVerify
 
 
-def add_question(chat_id: int, description: str, answers: list[str], image: Optional[str] = None):
+def add_question(
+    chat_id: int, description: str, answers: list[str], image: Optional[str] = None
+):
     """
     添加一个入群问题
     """
@@ -50,3 +52,30 @@ def add_answer(user_id: int, question: int, answer: int) -> bool:
         .where(Question.id == question, Question.correct_answer == answer)
         .get_or_none()
     ) is not None
+
+
+def add_pending_verify(chat_id: int, user_id: int):
+    """
+    记录待验证用户
+    """
+    PendingVerify.insert(user=user_id, group=chat_id).on_conflict_ignore().execute()
+
+
+def get_pending_verify(chat_id: int, user_id: int) -> Optional[PendingVerify]:
+    """
+    检查用户是否待验证
+    """
+    return (
+        PendingVerify.select()
+        .where(PendingVerify.user == user_id, PendingVerify.group == chat_id)
+        .get_or_none()
+    )
+
+
+def remove_pending_verify(chat_id: int, user_id: int):
+    """
+    删除待验证用户
+    """
+    PendingVerify.delete().where(
+        PendingVerify.user == user_id, PendingVerify.group == chat_id
+    ).execute()
