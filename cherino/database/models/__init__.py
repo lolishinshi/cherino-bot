@@ -1,3 +1,2 @@
-from .question import Question, Answer
-from .user import User
+from .question import Question, Answer, AnswerHistory
 from .record import Record

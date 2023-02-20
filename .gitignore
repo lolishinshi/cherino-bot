@@ -146,3 +146,5 @@ cython_debug/
 
 .pdm.toml
 .idea
+*.sqlite
+*.db

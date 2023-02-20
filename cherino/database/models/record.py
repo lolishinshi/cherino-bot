@@ -1,6 +1,13 @@
 import datetime
 
-from peewee import Model, BigIntegerField, CharField, AutoField, TextField, DateTimeField
+from peewee import (
+    Model,
+    BigIntegerField,
+    CharField,
+    AutoField,
+    TextField,
+    DateTimeField,
+)
 
 from cherino.database.db import db
 
@@ -20,4 +27,4 @@ class Record(Model):
 
     class Meta:
         database = db
-        indexes = (('user', 'group'), False)
+        indexes = ((("user", "group"), False),)
