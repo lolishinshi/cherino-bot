@@ -7,6 +7,7 @@ from loguru import logger
 
 from cherino import crud
 from cherino.filters import IsAdmin
+from cherino.scheduler import Scheduler
 from cherino.utils.user import get_admin, get_admin_mention
 
 router = Router()
@@ -84,7 +85,7 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
     operator = message.from_user
     reason = command.args
 
-    if user.id in get_admin():
+    if user.id in await get_admin(message.chat.id, bot):
         return
 
     try:
@@ -104,7 +105,7 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
 
         mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
         text = "{}用户: {}\n举报人: {}\n理由: {}".format(
-            mention_admin, user.id, operator.id, reason
+            mention_admin, user.mention_html(), operator.id, reason
         )
 
         await message.reply_to_message.reply(text, reply_markup=builder.as_markup())
@@ -114,35 +115,62 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
         await message.delete()
 
 
-@router.callback_query(ReportCallback.filter(), IsAdmin())
-async def callback_report(query: CallbackQuery, callback_data: ReportCallback):
+@router.callback_query(ReportCallback.filter(F.action == "ban"), IsAdmin())
+async def callback_report_ban(
+    query: CallbackQuery, callback_data: ReportCallback, scheduler: Scheduler
+):
     """
     处理举报回调
     """
     report = crud.user.get_report(callback_data.report_id)
 
     try:
-        if callback_data.action == "ban":
-            crud.user.handle_report(callback_data.report_id, query.from_user.id, "ban")
-            await query.message.chat.ban(report.user)
-            await query.message.chat.delete_message(callback_data.message)
-            await query.message.edit_text("已肃清用户: {}\n理由: {}".format(report.user, "举报"))
-        elif callback_data.action == "warn":
-            await query.message.chat.delete_message(callback_data.message)
-            warn_cnt = crud.user.handle_report(
-                callback_data.report_id, query.from_user.id, "warn"
+        crud.user.handle_report(callback_data.report_id, query.from_user.id, "ban")
+        await query.message.chat.ban(report.user)
+        await query.message.chat.delete_message(callback_data.message)
+        await query.message.edit_text(
+            "已肃清用户: {}\n理由: {}".format(report.user, report.reason)
+        )
+        scheduler.run_after(query.message.delete(), 10, f"{query.message.message_id}")
+    except Exception as e:
+        logger.warning("处理举报回调失败：{}", e)
+
+
+@router.callback_query(ReportCallback.filter(F.action == "warn"), IsAdmin())
+async def callback_report_warn(
+    query: CallbackQuery, callback_data: ReportCallback, scheduler: Scheduler
+):
+    """
+    处理举报回调
+    """
+    report = crud.user.get_report(callback_data.report_id)
+
+    try:
+        await query.message.chat.delete_message(callback_data.message)
+        warn_cnt = crud.user.handle_report(
+            callback_data.report_id, query.from_user.id, "warn"
+        )
+        if warn_cnt < 3:
+            await query.message.edit_text(
+                "用户 {} 已被警告 {}/3 次\n理由: {}".format(report.user, warn_cnt, report.reason)
             )
-            if warn_cnt < 3:
-                await query.message.edit_text(
-                    "用户 {} 已被警告 {}/3 次\n理由: {}".format(report.user, warn_cnt, "举报")
-                )
-            else:
-                crud.user.ban(
-                    report.user, query.from_user.id, query.message.chat.id, "警告次数达到上限"
-                )
-                await query.message.chat.ban(report.user)
-                await query.message.edit_text("用户 {} 警告次数达到上限，已被肃清".format(report.user))
-        elif callback_data.action == "cancel":
-            await query.message.delete()
+        else:
+            crud.user.ban(
+                report.user, query.from_user.id, query.message.chat.id, "警告次数达到上限"
+            )
+            await query.message.chat.ban(report.user)
+            await query.message.edit_text("用户 {} 警告次数达到上限，已被肃清".format(report.user))
+        scheduler.run_after(query.message.delete(), 10, f"{query.message.message_id}")
+    except Exception as e:
+        logger.warning("处理举报回调失败：{}", e)
+
+
+@router.callback_query(ReportCallback.filter(F.action == "cancel"), IsAdmin())
+async def callback_report_cancel(query: CallbackQuery):
+    """
+    处理举报回调
+    """
+    try:
+        await query.message.delete()
     except Exception as e:
         logger.warning("处理举报回调失败：{}", e)

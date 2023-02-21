@@ -49,7 +49,9 @@ async def process_add_question(message: Message, scheduler: Scheduler):
 @router.callback_query(
     SettingsCallback.filter(F.action == "delete_question"), IsAdmin()
 )
-async def setting_delete_question(query: CallbackQuery, callback_data: SettingsCallback):
+async def setting_delete_question(
+    query: CallbackQuery, callback_data: SettingsCallback
+):
     """
     删除入群问题
     """
@@ -61,14 +63,17 @@ async def setting_delete_question(query: CallbackQuery, callback_data: SettingsC
         builder = InlineKeyboardBuilder()
         for q in question:
             builder.button(
-                text=q.description,
+                text=f"{q.description} - {q.correct_answer.description}",
                 callback_data=SettingsCallback(
                     action="delete_question", data=q.id
                 ).pack(),
             )
-        builder.button(text="返回", callback_data=SettingsCallback(action="backward").pack())
+        builder.button(
+            text="返回", callback_data=SettingsCallback(action="backward").pack()
+        )
         builder.adjust(1, repeat=True)
-        await query.message.edit_text(text="请选择需要删除的问题", reply_markup=builder.as_markup())
+        await query.message.edit_text(
+            text="请选择需要删除的问题", reply_markup=builder.as_markup()
+        )
     except Exception as e:
         logger.warning("删除入群问题失败: {}", e)
-

@@ -34,7 +34,9 @@ def delete_question(chat_id: int, question_id: int):
     删除一个问题
     """
     Answer.delete().where(Answer.question == question_id).execute()
-    Question.delete().where(Question.id == question_id, Question.group == chat_id).execute()
+    Question.delete().where(
+        Question.id == question_id, Question.group == chat_id
+    ).execute()
 
 
 def get_question(chat_id: int) -> Optional[tuple[Question, Answer]]:
