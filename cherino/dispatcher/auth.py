@@ -94,7 +94,7 @@ async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler)
         for user in users:
             await restrict_user(chat.id, user.id, True, bot)
             scheduler.run_after(
-                chat.ban(user.id, timedelta(days=1)),
+                chat.ban(user.id, timedelta(hours=1)),
                 60,
                 job_id=f"auth:{message.chat.id}:{user.id}",
             )
@@ -131,7 +131,7 @@ async def cmd_start(message: Message, command: CommandObject):
             await message.reply("你当前没有待进行的审查")
             return
         if pending_verify.created_at + timedelta(seconds=60) < datetime.now():
-            await message.reply("你当前的审查已经过期，请 24 小时后重新加入")
+            await message.reply("你当前的审查已经过期，请 1 小时后重新加入")
             pending_verify.delete_instance()
             return
 
@@ -179,9 +179,9 @@ async def callback_auth_private(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            await query.answer("很抱歉，回答错误，您将被移除本群。请 24 小时候再重试。")
+            await query.answer("很抱歉，回答错误，您将被移除本群。请 1 小时候再重试。")
             await bot.ban_chat_member(
-                callback_data.group, query.from_user.id, timedelta(hours=24)
+                callback_data.group, query.from_user.id, timedelta(hours=1)
             )
         else:
             await query.answer("欢迎你，同志！")
@@ -217,7 +217,7 @@ async def on_user_join_group(message: Message, bot: Bot, scheduler: Scheduler):
         for user in users:
             await restrict_user(chat.id, user.id, True, bot)
             scheduler.run_after(
-                chat.ban(user.id, timedelta(days=1)),
+                chat.ban(user.id, timedelta(hours=1)),
                 60,
                 job_id=f"auth:{chat.id}:{user.id}",
             )
@@ -259,9 +259,9 @@ async def callback_auth_group(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            await query.answer("很抱歉，回答错误，您将被移除本群。请 24 小时候再重试。")
+            await query.answer("很抱歉，回答错误，您将被移除本群。请 1 小时候再重试。")
             await bot.ban_chat_member(
-                callback_data.group, query.from_user.id, timedelta(hours=24)
+                callback_data.group, query.from_user.id, timedelta(hours=1)
             )
         else:
             await query.answer("欢迎你，新同志！")
