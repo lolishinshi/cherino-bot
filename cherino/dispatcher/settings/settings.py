@@ -9,6 +9,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
+from cherino import crud
 from cherino.filters import IsAdmin
 
 router = Router()
@@ -23,8 +24,19 @@ class SettingsCallback(CallbackData, prefix="settings"):
     data: Optional[str]
 
 
-def settings_keyboard() -> InlineKeyboardMarkup:
+def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
+    allow_join = crud.setting.get_setting(chat_id, "allow_join", "yes")
+    auth_type = crud.setting.get_setting(chat_id, "auth_type", "私聊")
+
     builder = InlineKeyboardBuilder()
+    builder.button(
+        text=f"允许加入 - {allow_join}",
+        callback_data=SettingsCallback(action="allow_join").pack(),
+    )
+    builder.button(
+        text=f"验证方式 - {auth_type}",
+        callback_data=SettingsCallback(action="auth_type").pack(),
+    )
     builder.button(
         text="添加入群问题", callback_data=SettingsCallback(action="add_question").pack()
     )
@@ -36,13 +48,18 @@ def settings_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+async def open_settings(callback: CallbackQuery):
+    keyboard = settings_keyboard(callback.message.chat.id)
+    await callback.message.edit_text("同志，欢迎来到设置页面", reply_markup=keyboard)
+
+
 @router.message(Command("settings"), IsAdmin())
 async def settings(message: Message):
     """
     打开全局设置
     """
     logger.info("打开全局设置: {}", message.chat.id)
-    keyboard = settings_keyboard()
+    keyboard = settings_keyboard(message.chat.id)
     await message.reply("同志，欢迎来到设置页面", reply_markup=keyboard)
 
 
@@ -60,6 +77,27 @@ async def backward(callback: CallbackQuery, state: FSMContext):
     """
     返回设置页面
     """
-    keyboard = settings_keyboard()
     await state.clear()
-    await callback.message.edit_text("同志，欢迎来到设置页面", reply_markup=keyboard)
+    await open_settings(callback)
+
+
+@router.callback_query(SettingsCallback.filter(F.action == "allow_join"), IsAdmin())
+async def callback_allow_join(callback: CallbackQuery):
+    """
+    更改是否允许加入
+    """
+    t = crud.setting.get_setting(callback.message.chat.id, "allow_join", "yes")
+    t = "no" if t == "yes" else "yes"
+    crud.setting.set_setting(callback.message.chat.id, "allow_join", t)
+    await open_settings(callback)
+
+
+@router.callback_query(SettingsCallback.filter(F.action == "auth_type"), IsAdmin())
+async def callback_auth_type(callback: CallbackQuery):
+    """
+    更改验证方式
+    """
+    t = crud.setting.get_setting(callback.message.chat.id, "auth_type", "私聊")
+    t = "私聊" if t == "群内" else "群内"
+    crud.setting.set_setting(callback.message.chat.id, "auth_type", t)
+    await open_settings(callback)

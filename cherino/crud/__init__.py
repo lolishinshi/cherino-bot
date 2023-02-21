@@ -1,1 +1,1 @@
-from . import auth, user
+from . import auth, setting, user

@@ -1,6 +1,6 @@
-from aiogram import Bot, Router, F
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardRemove, ContentType
+from aiogram.types import ContentType, Message, ReplyKeyboardRemove
 
 from cherino import utils
 
@@ -9,6 +9,7 @@ router = Router()
 
 @router.message(Command("ping"))
 async def cmd_ping(message: Message):
+    print(message.json())
     await message.reply("pong", reply_markup=ReplyKeyboardRemove())
 
 

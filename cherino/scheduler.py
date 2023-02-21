@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Callable
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.methods import TelegramMethod
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
 
 
@@ -19,13 +19,22 @@ class Scheduler:
         TelegramMethod 是 awaitable 的，但是 apscheduler 只会根据 iscoroutinefunction 的结果来判断是否是异步函数
         """
         if isinstance(func, TelegramMethod):
+
             async def wrapper(*args, **kwargs):
                 return await func
+
             return wrapper
         else:
             return func
 
-    def run_single(self, func: Callable | TelegramMethod, seconds: int, job_id: str, *args, **kwargs):
+    def run_single(
+        self,
+        func: Callable | TelegramMethod,
+        seconds: int,
+        job_id: str,
+        *args,
+        **kwargs,
+    ):
         """
         若干秒后执行命令，如果已经存在相同 job_id 的任务，则立即运行前一个任务
         """
@@ -39,7 +48,14 @@ class Scheduler:
             func, seconds, f"{job_id}:_CNT_:{randint(0, 2**32)}", *args, **kwargs
         )
 
-    def run_after(self, func: Callable | TelegramMethod, seconds: int, job_id: str, *args, **kwargs):
+    def run_after(
+        self,
+        func: Callable | TelegramMethod,
+        seconds: int,
+        job_id: str,
+        *args,
+        **kwargs,
+    ):
         """
         若干秒后执行命令
         """
