@@ -2,7 +2,7 @@ from typing import Optional
 
 from peewee import fn
 
-from cherino.database.models import Question, Answer, AnswerHistory, PendingVerify
+from cherino.database.models import Answer, AnswerHistory, PendingVerify, Question
 
 
 def add_question(
@@ -20,6 +20,21 @@ def add_question(
     answer = Answer.create(question=question, description=correct_answer)
     question.correct_answer = answer
     question.save()
+
+
+def get_all_questions(chat_id: int) -> list[Question]:
+    """
+    获取所有入群问题
+    """
+    return list(Question.select().where(Question.group == chat_id))
+
+
+def delete_question(chat_id: int, question_id: int):
+    """
+    删除一个问题
+    """
+    Answer.delete().where(Answer.question == question_id).execute()
+    Question.delete().where(Question.id == question_id, Question.group == chat_id).execute()
 
 
 def get_question(chat_id: int) -> Optional[tuple[Question, Answer]]:

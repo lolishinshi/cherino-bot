@@ -1,10 +1,10 @@
 from peewee import (
+    AutoField,
+    BigIntegerField,
+    DeferredForeignKey,
+    ForeignKeyField,
     Model,
     TextField,
-    BigIntegerField,
-    AutoField,
-    ForeignKeyField,
-    DeferredForeignKey,
 )
 
 from cherino.database.db import db

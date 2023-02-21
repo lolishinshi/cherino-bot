@@ -1,7 +1,6 @@
-from aiogram import Router, Bot
+from aiogram import Bot, Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardRemove
-
+from aiogram.types import Message, ReplyKeyboardRemove, ContentType
 
 from cherino import utils
 
@@ -19,4 +18,9 @@ async def cmd_admin(message: Message, bot: Bot):
     await message.reply(
         "{}用户 {} 召唤了管理员".format(admin, message.from_user.mention_html())
     )
+    await message.delete()
+
+
+@router.message(F.content_type == ContentType.LEFT_CHAT_MEMBER)
+async def on_user_join(message: Message):
     await message.delete()

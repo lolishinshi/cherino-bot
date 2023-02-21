@@ -1,6 +1,6 @@
 from aiogram import Bot
 from aiogram.filters import Filter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from cherino.utils import user
 

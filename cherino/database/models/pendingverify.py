@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from peewee import Model, BigIntegerField, CompositeKey, DateTimeField
+from peewee import BigIntegerField, CompositeKey, DateTimeField, Model
 
 from cherino.database.db import db
 

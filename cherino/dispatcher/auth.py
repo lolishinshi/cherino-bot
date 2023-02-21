@@ -1,16 +1,22 @@
-from datetime import timedelta, datetime
 from asyncio import sleep
+from datetime import datetime, timedelta
 
-from aiogram import Router, Bot, F
-from aiogram.filters import CommandStart, CommandObject
+from aiogram import Bot, F, Router
+from aiogram.filters import CommandObject, CommandStart
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import ChatPermissions, CallbackQuery, ContentType, Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import (
+    CallbackQuery,
+    ContentType,
+    Message,
+)
 from aiogram.utils.deep_linking import create_start_link
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
 from cherino import crud
+from cherino.filters import MemberJoin
 from cherino.scheduler import Scheduler
+from cherino.utils.user import restrict_user
 
 router = Router()
 
@@ -26,42 +32,42 @@ class StartCallback(CallbackData, prefix="start"):
     user: int
 
 
-@router.message(F.content_type == ContentType.NEW_CHAT_MEMBERS, ~F.from_user.is_bot)
+@router.message(F.content_type == ContentType.NEW_CHAT_MEMBERS, MemberJoin())
 async def on_user_join(message: Message, bot: Bot, scheduler: Scheduler):
     """
     入群验证
     """
     logger.info("入群验证：{} - {}", message.chat.id, message.from_user.id)
-    chat, user = message.chat, message.from_user
-    read_only = ChatPermissions(**{k: False for k in ChatPermissions().dict().keys()})
 
-    link = await create_start_link(bot, str(chat.id))
-    builder = InlineKeyboardBuilder()
-    builder.button(text="前往审查", url=link)
+    users = [user for user in message.new_chat_members if not user.is_bot]
+    chat = message.chat
 
     try:
         if not crud.auth.get_question(message.chat.id):
-            await bot.send_message(chat.id, "本群似乎没有任何验证问题，请添加问题以开启入群验证")
+            reply = await message.reply("本群未设置入群问题，默认不允许任何人加入，您将被踢出并封禁 1 分钟")
+            await sleep(2)
+            await message.delete()
+            await reply.delete()
+            for user in message.new_chat_members:
+                await chat.ban(user.id, timedelta(seconds=60))
             return
 
-        await chat.restrict(user.id, read_only)
+        for user in message.new_chat_members:
+            await restrict_user(chat.id, user.id, True, bot)
+            scheduler.run_after(chat.ban(user.id, timedelta(days=1)), 60, job_id=f"auth:{message.chat.id}:{user.id}")
+            crud.auth.add_pending_verify(chat.id, user.id)
 
-        new_message = await bot.send_message(
+        builder = InlineKeyboardBuilder()
+        builder.button(text="前往审查", url=await create_start_link(bot, str(chat.id)))
+
+        reply = await bot.send_message(
             chat.id,
             "新加入的同志，请在 60s 内点击下方按钮并完成审查".format(),
             reply_markup=builder.as_markup(),
         )
 
-        crud.auth.add_pending_verify(chat.id, user.id)
+        scheduler.run_single(reply.delete(), 60, job_id="auth:delete-welcome")
 
-        async def ban():
-            await chat.ban(user.id, timedelta(days=1))
-
-        async def delete():
-            await new_message.delete()
-
-        scheduler.run_single(delete, 60, job_id="auth:delete-welcome")
-        scheduler.run_after(ban, 60, job_id=f"auth:{message.chat.id}:{user.id}")
     except Exception as e:
         logger.warning("入群提示失败: {}", e)
 
@@ -84,6 +90,7 @@ async def start(message: Message, bot: Bot, command: CommandObject):
                     group=chat_id, question=question.id, answer=answer.id
                 ).pack(),
             )
+        builder.adjust(1, repeat=True)
 
         pending_verify = crud.auth.get_pending_verify(chat_id, user.id)
         if not pending_verify:
@@ -122,7 +129,6 @@ async def auth_callback(
     """
     入群验证回调
     """
-    read_write = ChatPermissions(**{k: True for k in ChatPermissions().dict().keys()})
 
     try:
         pending_verify = crud.auth.get_pending_verify(
@@ -148,9 +154,7 @@ async def auth_callback(
             )
         else:
             await query.message.edit_text("欢迎你，同志！")
-            await bot.restrict_chat_member(
-                callback_data.group, query.from_user.id, read_write
-            )
+            await restrict_user(callback_data.group, query.from_user.id, False, bot)
 
         scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
     except Exception as e:

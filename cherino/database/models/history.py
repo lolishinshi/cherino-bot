@@ -1,16 +1,17 @@
 from datetime import datetime
 
 from peewee import (
-    Model,
+    AutoField,
     BigIntegerField,
     CharField,
-    AutoField,
-    TextField,
     DateTimeField,
     ForeignKeyField,
+    Model,
+    TextField,
 )
 
 from cherino.database.db import db
+
 from .question import Answer, Question
 
 
