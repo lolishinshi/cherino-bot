@@ -1,4 +1,4 @@
-from aiogram import Router, Bot
+from aiogram import Router, Bot, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters.callback_data import CallbackData
@@ -7,25 +7,19 @@ from loguru import logger
 
 from cherino.filters import IsAdmin
 from cherino import crud
-from cherino import utils
+from cherino.utils.user import get_admin, get_admin_mention
 
 router = Router()
 
 
 class ReportCallback(CallbackData, prefix="report"):
-    user: int
-    reporter: int
+    report_id: int
     message: int
     action: str
 
 
-@router.message(Command(commands=["ping"]))
-async def ping(message: Message):
-    await message.reply("pong")
-
-
-@router.message(Command(commands=["ban"]), IsAdmin())
-async def ban(message: Message, bot: Bot, command: CommandObject):
+@router.message(Command("ban"), IsAdmin())
+async def cmd_ban(message: Message, bot: Bot, command: CommandObject):
     """
     封禁用户，并删除该用户所有消息
     """
@@ -33,10 +27,11 @@ async def ban(message: Message, bot: Bot, command: CommandObject):
         return
 
     user = message.reply_to_message.from_user
+    operator = message.from_user
     reason = command.args
 
     try:
-        crud.user.ban(user.id, message.chat.id, reason)
+        crud.user.ban(user.id, operator.id, message.chat.id, reason)
         await bot.ban_chat_member(message.chat.id, user.id, revoke_messages=True)
         await message.reply("已肃清用户: {}\n理由: {}".format(user.mention_html(), reason))
     except Exception as e:
@@ -45,8 +40,8 @@ async def ban(message: Message, bot: Bot, command: CommandObject):
         await message.delete()
 
 
-@router.message(Command(commands=["warn"]), IsAdmin())
-async def warn(message: Message, bot: Bot, command: CommandObject):
+@router.message(Command("warn"), IsAdmin())
+async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
     """
     警告用户，当警告次数达到上限时，自动封禁用户
     """
@@ -54,10 +49,11 @@ async def warn(message: Message, bot: Bot, command: CommandObject):
         return
 
     user = message.reply_to_message.from_user
+    operator = message.from_user
     reason = command.args
 
     try:
-        warn_cnt = crud.user.warn(user.id, message.chat.id, reason)
+        warn_cnt = crud.user.warn(user.id, operator.id, message.chat.id, reason)
         if warn_cnt < 3:
             await message.reply(
                 "用户 {} 已被警告 {}/3 次\n理由: {}".format(
@@ -65,7 +61,7 @@ async def warn(message: Message, bot: Bot, command: CommandObject):
                 )
             )
         else:
-            crud.user.ban(user.id, message.chat.id, reason)
+            crud.user.ban(user.id, operator.id, message.chat.id, "警告次数达到上限")
             await bot.ban_chat_member(message.chat.id, user.id)
             await message.reply("用户 {} 警告次数达到上限，已被肃清".format(user.mention_html()))
 
@@ -76,13 +72,8 @@ async def warn(message: Message, bot: Bot, command: CommandObject):
         await message.delete()
 
 
-@router.message(Command(commands=["reward"]), IsAdmin())
-async def reward(message: Message, bot: Bot):
-    pass
-
-
-@router.message(Command(commands=["report"]))
-async def report(message: Message, bot: Bot, command: CommandObject):
+@router.message(Command("report"))
+async def cmd_report(message: Message, bot: Bot, command: CommandObject):
     """
     举报用户
     """
@@ -90,56 +81,68 @@ async def report(message: Message, bot: Bot, command: CommandObject):
         return
 
     user = message.reply_to_message.from_user
+    operator = message.from_user
     reason = command.args
 
-    builder = InlineKeyboardBuilder()
-    for text, data in [("警告", "warn"), ("封禁", "ban"), ("举报", "report")]:
-        builder.button(
-            text=text,
-            callback_data=ReportCallback(
-                user=user.id,
-                reporter=message.from_user.id,
-                action=data,
-                message=message.reply_to_message.message_id,
-            ).pack(),
-        )
-    builder.adjust(2, 1)
-
-    mention_admin = "".join(await utils.user.get_admin_mention(message.chat.id, bot))
+    if user.id in get_admin():
+        return
 
     try:
-        mention_user = user.id
-        mention_reporter = message.from_user.id
-        text = "{}用户：{}\n举报人：{}\n理由:{}".format(
-            mention_admin, mention_user, mention_reporter, reason
+        # TODO: 失败后，回滚数据库
+        report_id = crud.user.report(user.id, operator.id, message.chat.id, reason).id
+        builder = InlineKeyboardBuilder()
+        for text, data in [("警告", "warn"), ("封禁", "ban"), ("撤销", "cancel")]:
+            builder.button(
+                text=text,
+                callback_data=ReportCallback(
+                    report_id=report_id,
+                    action=data,
+                    message=message.reply_to_message.message_id,
+                ).pack(),
+            )
+        builder.adjust(2, 1)
+
+        mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
+        text = "{}用户: {}\n举报人: {}\n理由: {}".format(
+            mention_admin, user.id, operator.id, reason
         )
+
         await message.reply_to_message.reply(text, reply_markup=builder.as_markup())
     except Exception as e:
         logger.warning("举报用户失败：{}", e)
+    finally:
+        await message.delete()
 
 
 @router.callback_query(ReportCallback.filter(), IsAdmin())
-async def report_callback(query: CallbackQuery, callback_data: ReportCallback):
+async def callback_report(query: CallbackQuery, callback_data: ReportCallback):
     """
     处理举报回调
     """
-    if callback_data.action == "ban":
-        crud.user.ban(callback_data.user, query.message.chat.id, "举报")
-        await query.message.chat.ban(callback_data.user)
-        await query.message.edit_text(
-            "已肃清用户: {}\n理由: {}".format(callback_data.user, "举报")
-        )
-    elif callback_data.action == "warn":
-        warn_cnt = crud.user.warn(callback_data.user, query.message.chat.id, "举报")
-        if warn_cnt < 3:
-            await query.message.edit_text(
-                "用户 {} 已被警告 {}/3 次\n理由: {}".format(callback_data.user, warn_cnt, "举报")
+    report = crud.user.get_report(callback_data.report_id)
+
+    try:
+        if callback_data.action == "ban":
+            crud.user.handle_report(callback_data.report_id, query.from_user.id, "ban")
+            await query.message.chat.ban(report.user)
+            await query.message.chat.delete_message(callback_data.message)
+            await query.message.edit_text("已肃清用户: {}\n理由: {}".format(report.user, "举报"))
+        elif callback_data.action == "warn":
+            await query.message.chat.delete_message(callback_data.message)
+            warn_cnt = crud.user.handle_report(
+                callback_data.report_id, query.from_user.id, "warn"
             )
-        else:
-            crud.user.ban(callback_data.user, query.message.chat.id, "举报")
-            await query.message.chat.ban(callback_data.user)
-            await query.message.edit_text(
-                "用户 {} 警告次数达到上限，已被肃清".format(callback_data.user)
-            )
-    elif callback_data.action == "cancel":
-        await query.message.delete()
+            if warn_cnt < 3:
+                await query.message.edit_text(
+                    "用户 {} 已被警告 {}/3 次\n理由: {}".format(report.user, warn_cnt, "举报")
+                )
+            else:
+                crud.user.ban(
+                    report.user, query.from_user.id, query.message.chat.id, "警告次数达到上限"
+                )
+                await query.message.chat.ban(report.user)
+                await query.message.edit_text("用户 {} 警告次数达到上限，已被肃清".format(report.user))
+        elif callback_data.action == "cancel":
+            await query.message.delete()
+    except Exception as e:
+        logger.warning("处理举报回调失败：{}", e)

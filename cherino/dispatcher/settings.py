@@ -5,10 +5,11 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from loguru import logger
 
 from cherino.filters import IsAdmin
 from cherino import crud
-
+from cherino.scheduler import Scheduler
 
 router = Router()
 
@@ -36,6 +37,7 @@ async def settings(message: Message):
     """
     打开全局设置
     """
+    logger.info("打开全局设置: {}", message.chat.id)
     keyboard = settings_keyboard()
     await message.reply("同志，欢迎来到设置页面", reply_markup=keyboard)
 
@@ -74,7 +76,7 @@ async def backward(callback: CallbackQuery, state: FSMContext):
 
 
 @router.message(SettingState.add_question, IsAdmin())
-async def process_add_question(message: Message, state: FSMContext):
+async def process_add_question(message: Message, scheduler: Scheduler):
     """
     记录回复的入群问题
     """
@@ -86,8 +88,11 @@ async def process_add_question(message: Message, state: FSMContext):
     question, *answers = text.splitlines()
     crud.auth.add_question(message.chat.id, question, answers, image)
 
-    builder = InlineKeyboardBuilder()
-    builder.button(text="返回", callback_data=SettingsCallback(action="backward").pack())
-    await message.reply("已添加，你可以选择继续添加或者点击返回", reply_markup=builder.as_markup())
     await message.delete()
 
+    reply_message = await message.reply("已添加，你可以选择继续添加或者点击返回")
+
+    async def delete():
+        await reply_message.delete()
+
+    scheduler.run_after(delete, 5, f"{reply_message.message_id}")

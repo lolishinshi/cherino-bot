@@ -58,24 +58,20 @@ def add_pending_verify(chat_id: int, user_id: int):
     """
     记录待验证用户
     """
-    PendingVerify.insert(user=user_id, group=chat_id).on_conflict_ignore().execute()
+    PendingVerify.insert(user=user_id, group=chat_id).on_conflict_replace().execute()
 
 
-def get_pending_verify(chat_id: int, user_id: int) -> Optional[PendingVerify]:
+def get_pending_verify(
+    chat_id: int, user_id: Optional[int] = None
+) -> Optional[PendingVerify] | list[PendingVerify]:
     """
     检查用户是否待验证
     """
-    return (
-        PendingVerify.select()
-        .where(PendingVerify.user == user_id, PendingVerify.group == chat_id)
-        .get_or_none()
-    )
-
-
-def remove_pending_verify(chat_id: int, user_id: int):
-    """
-    删除待验证用户
-    """
-    PendingVerify.delete().where(
-        PendingVerify.user == user_id, PendingVerify.group == chat_id
-    ).execute()
+    if user_id:
+        return (
+            PendingVerify.select()
+            .where(PendingVerify.user == user_id, PendingVerify.group == chat_id)
+            .get_or_none()
+        )
+    else:
+        return list(PendingVerify.select().where(PendingVerify.group == chat_id))

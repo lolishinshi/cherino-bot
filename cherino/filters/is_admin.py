@@ -11,7 +11,9 @@ class IsAdmin(Filter):
 
     async def __call__(self, message: Message | CallbackQuery, bot: Bot) -> bool:
         if isinstance(message, CallbackQuery):
-            return message.from_user.id in await user.get_admin(message.message.chat.id, bot)
+            return message.from_user.id in await user.get_admin(
+                message.message.chat.id, bot
+            )
         elif isinstance(message, Message):
             return message.from_user.id in await user.get_admin(message.chat.id, bot)
         raise RuntimeError("Unreachable")

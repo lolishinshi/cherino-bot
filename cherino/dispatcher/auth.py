@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from asyncio import sleep
 
 from aiogram import Router, Bot, F
@@ -31,6 +31,7 @@ async def on_user_join(message: Message, bot: Bot, scheduler: Scheduler):
     """
     入群验证
     """
+    logger.info("入群验证：{} - {}", message.chat.id, message.from_user.id)
     chat, user = message.chat, message.from_user
     read_only = ChatPermissions(**{k: False for k in ChatPermissions().dict().keys()})
 
@@ -38,14 +39,9 @@ async def on_user_join(message: Message, bot: Bot, scheduler: Scheduler):
     builder = InlineKeyboardBuilder()
     builder.button(text="前往审查", url=link)
 
-    async def ban():
-        await chat.ban(user.id, timedelta(days=1))
-
     try:
-        await message.delete()
-
         if not crud.auth.get_question(message.chat.id):
-            # 如果没有任何问题，直接通过
+            await bot.send_message(chat.id, "本群似乎没有任何验证问题，请添加问题以开启入群验证")
             return
 
         await chat.restrict(user.id, read_only)
@@ -57,7 +53,14 @@ async def on_user_join(message: Message, bot: Bot, scheduler: Scheduler):
         )
 
         crud.auth.add_pending_verify(chat.id, user.id)
-        scheduler.run_after(new_message.delete, 60, job_id="auth:delete-welcome")
+
+        async def ban():
+            await chat.ban(user.id, timedelta(days=1))
+
+        async def delete():
+            await new_message.delete()
+
+        scheduler.run_single(delete, 60, job_id="auth:delete-welcome")
         scheduler.run_after(ban, 60, job_id=f"auth:{message.chat.id}:{user.id}")
     except Exception as e:
         logger.warning("入群提示失败: {}", e)
@@ -68,22 +71,27 @@ async def start(message: Message, bot: Bot, command: CommandObject):
     """
     处理通过 deep link 跳转过来的用户验证请求
     """
-    chat_id = int(command.args)
-    user = message.from_user
-
-    question, answers = crud.auth.get_question(message.chat.id)
-    builder = InlineKeyboardBuilder()
-    for answer in answers:
-        builder.button(
-            text=answer.description,
-            callback_data=UserAuthCallback(
-                group=chat_id, question=question.id, answer=answer.id
-            ).pack(),
-        )
-
     try:
-        if not crud.auth.get_pending_verify(chat_id, user.id):
-            await message.reply("你已经是我们可靠的同志了！")
+        chat_id = int(command.args)
+        user = message.from_user
+
+        question, answers = crud.auth.get_question(chat_id)
+        builder = InlineKeyboardBuilder()
+        for answer in answers:
+            builder.button(
+                text=answer.description,
+                callback_data=UserAuthCallback(
+                    group=chat_id, question=question.id, answer=answer.id
+                ).pack(),
+            )
+
+        pending_verify = crud.auth.get_pending_verify(chat_id, user.id)
+        if not pending_verify:
+            await message.reply("你当前没有待进行的审查")
+            return
+        if pending_verify.created_at + timedelta(seconds=60) < datetime.now():
+            await message.reply("你当前的审查已经过期，请 24 小时后重新加入")
+            pending_verify.delete_instance()
             return
 
         if question.image:
@@ -106,7 +114,10 @@ async def start(message: Message, bot: Bot, command: CommandObject):
 
 @router.callback_query(UserAuthCallback.filter())
 async def auth_callback(
-    query: CallbackQuery, callback_data: UserAuthCallback, scheduler: Scheduler, bot: Bot
+    query: CallbackQuery,
+    callback_data: UserAuthCallback,
+    scheduler: Scheduler,
+    bot: Bot,
 ):
     """
     入群验证回调
@@ -114,21 +125,36 @@ async def auth_callback(
     read_write = ChatPermissions(**{k: True for k in ChatPermissions().dict().keys()})
 
     try:
-        # 先删掉消息，防止手快多次点击
-        await query.message.delete()
+        pending_verify = crud.auth.get_pending_verify(
+            callback_data.group, query.from_user.id
+        )
+        if (
+            not pending_verify
+            or pending_verify.created_at + timedelta(seconds=60) < datetime.now()
+        ):
+            await query.message.edit_text("你当前的审查已经过期")
+            return
+        pending_verify.delete_instance()
 
         success = crud.auth.add_answer(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            await query.answer("很抱歉，回答错误，您将被移除本群。请 24 小时候再重试。")
+            await query.message.edit_text("很抱歉，回答错误，您将被移除本群。请 24 小时候再重试。")
             await sleep(2)
             # TODO: 随着失败次数增加，延长封禁时间
-            await bot.ban_chat_member(callback_data.group, query.from_user.id, timedelta(hours=24))
+            await bot.ban_chat_member(
+                callback_data.group, query.from_user.id, timedelta(hours=24)
+            )
         else:
-            await query.answer("欢迎你，同志！")
-            await bot.restrict_chat_member(callback_data.group, query.from_user.id, read_write)
+            await query.message.edit_text("欢迎你，同志！")
+            await bot.restrict_chat_member(
+                callback_data.group, query.from_user.id, read_write
+            )
 
         scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
     except Exception as e:
         logger.error("入群验证回调失败: {}", e)
+
+    if len(crud.auth.get_pending_verify(callback_data.group)) == 0:
+        scheduler.run_single(lambda: None, 60, job_id="auth:delete-welcome")

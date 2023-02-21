@@ -12,4 +12,5 @@ class PendingVerify(Model):
 
     class Meta:
         database = db
-        primary_key = CompositeKey('user', 'group')
+        table_name = "pending_verify"
+        primary_key = CompositeKey("user", "group")

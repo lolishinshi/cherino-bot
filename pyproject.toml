@@ -23,4 +23,7 @@ cherino = "cherino.__main__:main"
 
 [tool.pdm]
 
+[tool.pdm.scripts]
+start.cmd = "pdm run python -m cherino"
+
 [tool.black]
