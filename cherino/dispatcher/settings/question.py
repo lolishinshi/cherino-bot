@@ -7,6 +7,7 @@ from loguru import logger
 from cherino import crud
 from cherino.filters import IsAdmin
 from cherino.scheduler import Scheduler
+from cherino.utils.message import add_question_from_message
 
 from .settings import SettingsCallback, SettingState
 
@@ -32,13 +33,7 @@ async def process_add_question(message: Message, scheduler: Scheduler):
     """
     记录回复的入群问题
     """
-    if message.photo:
-        image, text = message.photo[-1].file_id, message.caption
-    else:
-        image, text = None, message.text
-
-    question, *answers = text.splitlines()
-    crud.auth.add_question(message.chat.id, question, answers, image)
+    add_question_from_message(message)
 
     reply = await message.reply("已添加，你可以选择继续添加或者点击返回")
 

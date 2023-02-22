@@ -3,8 +3,8 @@ from random import randint
 from typing import Callable
 
 from aiogram.methods import TelegramMethod
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.base import JobLookupError
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
 
 
