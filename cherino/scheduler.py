@@ -4,6 +4,7 @@ from typing import Callable
 
 from aiogram.methods import TelegramMethod
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.jobstores.base import JobLookupError
 from loguru import logger
 
 
@@ -42,7 +43,6 @@ class Scheduler:
         for job in self.scheduler.get_jobs():
             if job.id.startswith(f"{job_id}:_CNT_:"):
                 job.reschedule(None)
-                self.scheduler.wakeup()
                 break
         self.run_after(
             func, seconds, f"{job_id}:_CNT_:{randint(0, 2**32)}", *args, **kwargs
@@ -74,4 +74,19 @@ class Scheduler:
         """
         取消任务
         """
-        self.scheduler.remove_job(job_id)
+        try:
+            self.scheduler.remove_job(job_id)
+        except JobLookupError:
+            pass
+
+    def trigger(self, job_id: str):
+        """
+        立即触发任务
+        """
+        if job := self.scheduler.get_job(job_id):
+            job.reschedule(None)
+        else:
+            for job in self.scheduler.get_jobs():
+                if job.id.startswith(f"{job_id}:_CNT_:"):
+                    job.reschedule(None)
+                    return
