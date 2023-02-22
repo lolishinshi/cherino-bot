@@ -11,6 +11,7 @@ def add_question(
     """
     添加一个入群问题
     """
+    assert len(answers) > 1
     question = Question.create(
         group=chat_id, description=description, image=image, correct_answer=0
     )

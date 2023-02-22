@@ -3,17 +3,17 @@ from aiogram.filters import Command
 from aiogram.types import ContentType, Message, ReplyKeyboardRemove
 
 from cherino import utils
+from cherino.filters import IsGroup
 
 router = Router()
 
 
 @router.message(Command("ping"))
 async def cmd_ping(message: Message):
-    print(message.json())
     await message.reply("pong", reply_markup=ReplyKeyboardRemove())
 
 
-@router.message(Command("admin"))
+@router.message(Command("admin"), IsGroup())
 async def cmd_admin(message: Message, bot: Bot):
     admin = "".join(await utils.user.get_admin_mention(message.chat.id, bot))
     await message.reply(

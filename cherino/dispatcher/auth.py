@@ -111,9 +111,13 @@ async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler)
         )
 
         # 准备在超时后删除验证消息
-        scheduler.run_single(reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}")
+        scheduler.run_single(
+            reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}"
+        )
         # 准备在超时后删除入群信息
-        scheduler.run_after(message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}")
+        scheduler.run_after(
+            message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+        )
 
     except Exception as e:
         logger.warning("入群提示失败: {}", e)
@@ -188,12 +192,16 @@ async def callback_auth_private(
                 callback_data.group, query.from_user.id, timedelta(hours=1)
             )
             # 验证失败，立即删除入群消息
-            scheduler.trigger(f"auth:delete-join:{callback_data.group}:{query.from_user.id}")
+            scheduler.trigger(
+                f"auth:delete-join:{callback_data.group}:{query.from_user.id}"
+            )
         else:
             await query.answer("欢迎你，同志！")
             await restrict_user(callback_data.group, query.from_user.id, False, bot)
             # 验证成功，取消删除入群消息
-            scheduler.cancel(f"auth:delete-join:{callback_data.group}:{query.from_user.id}")
+            scheduler.cancel(
+                f"auth:delete-join:{callback_data.group}:{query.from_user.id}"
+            )
 
         await query.message.delete()
         # 取消超时后封禁用用户的任务
@@ -251,7 +259,9 @@ async def on_user_join_group(message: Message, bot: Bot, scheduler: Scheduler):
 
         # 超时后删除入群信息
         # NOTE: 多位用户入群时此处只考虑第一位用户的认证状态
-        scheduler.run_after(message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}")
+        scheduler.run_after(
+            message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+        )
 
     except Exception as e:
         logger.warning("入群提示失败: {}", e)
@@ -281,12 +291,16 @@ async def callback_auth_group(
                 callback_data.group, query.from_user.id, timedelta(hours=1)
             )
             # 立即删除加入群组消息
-            scheduler.trigger(f"auth:delete-join:{callback_data.group}:{query.from_user.id}")
+            scheduler.trigger(
+                f"auth:delete-join:{callback_data.group}:{query.from_user.id}"
+            )
         else:
             await query.answer("欢迎你，新同志！")
             await restrict_user(callback_data.group, query.from_user.id, False, bot)
             # 取消删除加入群组消息
-            scheduler.cancel(f"auth:delete-join:{callback_data.group}:{query.from_user.id}")
+            scheduler.cancel(
+                f"auth:delete-join:{callback_data.group}:{query.from_user.id}"
+            )
 
         await query.message.delete()
         # 不管是否成功，都取消删除验证消息和封禁用户的任务
