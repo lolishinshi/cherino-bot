@@ -1,7 +1,7 @@
 from aiogram import Bot
 from aiogram.enums import ChatType
 from aiogram.filters import Filter
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ChatMemberLeft
 
 from cherino.utils.user import get_admin
 
@@ -44,3 +44,15 @@ class IsGroup(Filter):
         elif isinstance(message, Message):
             return message.chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]
         raise RuntimeError("Unreachable")
+
+
+class IsMember(Filter):
+    """
+    判断消息是否是群组中的正常用户发送的
+    """
+
+    async def __call__(self, message: Message, bot: Bot) -> bool:
+        member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+        if isinstance(member, ChatMemberLeft):
+            return False
+        return True
