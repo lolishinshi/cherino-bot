@@ -27,6 +27,9 @@ class SettingsCallback(CallbackData, prefix="settings"):
 def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
     allow_join = crud.setting.get_setting(chat_id, "allow_join", "yes")
     auth_type = crud.setting.get_setting(chat_id, "auth_type", "私聊")
+    allow_nonauth_media = crud.setting.get_setting(
+        chat_id, "allow_nonauth_media", "yes"
+    )
 
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -42,6 +45,10 @@ def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
     )
     builder.button(
         text="删除入群问题", callback_data=SettingsCallback(action="delete_question").pack()
+    )
+    builder.button(
+        text=f"允许未加入用户发送媒体 - {allow_nonauth_media}",
+        callback_data=SettingsCallback(action="allow_nonauth_media").pack(),
     )
     builder.button(text="完成", callback_data=SettingsCallback(action="finish").pack())
     builder.adjust(1, repeat=True)
@@ -100,4 +107,17 @@ async def callback_auth_type(callback: CallbackQuery):
     t = crud.setting.get_setting(callback.message.chat.id, "auth_type", "私聊")
     t = "私聊" if t == "群内" else "群内"
     crud.setting.set_setting(callback.message.chat.id, "auth_type", t)
+    await open_settings(callback)
+
+
+@router.callback_query(
+    SettingsCallback.filter(F.action == "allow_nonauth_media"), IsAdmin()
+)
+async def callback_allow_nonauth_media(callback: CallbackQuery):
+    """
+    更改是否允许未验证媒体
+    """
+    t = crud.setting.get_setting(callback.message.chat.id, "allow_nonauth_media", "yes")
+    t = "no" if t == "yes" else "yes"
+    crud.setting.set_setting(callback.message.chat.id, "allow_nonauth_media", t)
     await open_settings(callback)
