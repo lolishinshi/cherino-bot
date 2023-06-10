@@ -29,6 +29,6 @@ class HasMedia(Filter):
             ContentType.PHOTO,
             ContentType.VIDEO,
             ContentType.ANIMATION,
-            ContentType.STICKER,
+            # ContentType.STICKER,
             ContentType.DOCUMENT,
         ]

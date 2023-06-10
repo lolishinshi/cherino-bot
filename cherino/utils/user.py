@@ -3,6 +3,22 @@ from aiogram import Bot
 from aiogram.types import ChatPermissions
 from aiogram.utils import link, markdown
 from cachetools import TTLCache
+from enum import IntEnum
+
+
+class SpecialUserID(IntEnum):
+    """
+    一些特殊的 userid
+    """
+
+    ANONYMOUS_ADMIN = 1087968824
+    """匿名管理"""
+
+    SERVICE_CHAT = 777000
+    """转发频道的消息到讨论组"""
+
+    FAKE_CHANNEL = 136817688
+    """用频道身份发言"""
 
 
 @asyncache.cached(TTLCache(maxsize=128, ttl=600))
