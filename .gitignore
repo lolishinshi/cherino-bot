@@ -149,3 +149,4 @@ config.toml
 .idea
 *.sqlite
 *.db
+.pdm-python
