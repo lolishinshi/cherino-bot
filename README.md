@@ -10,3 +10,9 @@
 - 辅助管理
   - /report  - 举报用户
 - 入群验证
+
+## 部署
+
+```shell
+docker-compose up --build -d --force-recreate
+```
