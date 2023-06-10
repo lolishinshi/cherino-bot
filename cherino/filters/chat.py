@@ -4,7 +4,7 @@ from aiogram.filters import Filter
 from aiogram.enums import ChatMemberStatus
 from aiogram.types import CallbackQuery, Message
 
-from cherino.utils.user import get_admin
+from cherino.utils.user import get_admin, SpecialUserID
 
 
 class MemberJoin(Filter):
@@ -53,6 +53,11 @@ class IsMember(Filter):
     """
 
     async def __call__(self, message: Message, bot: Bot) -> bool:
+        if message.from_user.id in [
+            SpecialUserID.ANONYMOUS_ADMIN,
+            SpecialUserID.SERVICE_CHAT,
+        ]:
+            return True
         member = await bot.get_chat_member(message.chat.id, message.from_user.id)
         if member.status == ChatMemberStatus.LEFT:
             return False
