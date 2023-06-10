@@ -7,7 +7,7 @@ COPY pyproject.toml pdm.lock /app/
 COPY cherino /app/cherino
 
 WORKDIR /app
-RUN pdm config python.use_venv false && pdm install --prod --no-lock --no-editable
+RUN mkdir __pypackages__ && pdm sync --prod --no-editable
 
 FROM python:3.10
 
