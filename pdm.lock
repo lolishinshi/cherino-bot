@@ -96,6 +96,15 @@ requires_python = ">=3.7.0"
 summary = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 
 [[package]]
+name = "click"
+version = "8.1.3"
+requires_python = ">=3.7"
+summary = "Composable command line interface toolkit"
+dependencies = [
+    "colorama; platform_system == \"Windows\"",
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
@@ -139,6 +148,16 @@ summary = "multidict implementation"
 name = "peewee"
 version = "3.16.2"
 summary = "a little orm"
+
+[[package]]
+name = "peewee-migrate"
+version = "1.10.1"
+requires_python = ">=3.8,<4.0"
+summary = "Support for migrations in Peewee ORM"
+dependencies = [
+    "click",
+    "peewee<4,>=3",
+]
 
 [[package]]
 name = "pydantic"
@@ -213,7 +232,7 @@ dependencies = [
 lock_version = "4.2"
 cross_platform = true
 groups = ["default"]
-content_hash = "sha256:d7f4d7b63aa9835d12c89b03a15a8f653b2a23ebf3f54c5647d2465e9d40d6f5"
+content_hash = "sha256:dd2d81dad3c71ce0e7c0591ce8c41fe9d86f70afefbe7725e5e2a5af2766d359"
 
 [metadata.files]
 "aiofiles 23.1.0" = [
@@ -418,6 +437,10 @@ content_hash = "sha256:d7f4d7b63aa9835d12c89b03a15a8f653b2a23ebf3f54c5647d2465e9
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/fa/8e/2e5c742c3082bce3eea2ddd5b331d08050cda458bc362d71c48e07a44719/charset_normalizer-3.1.0-cp37-cp37m-musllinux_1_1_ppc64le.whl", hash = "sha256:04afa6387e2b282cf78ff3dbce20f0cc071c12dc8f685bd40960cc68644cfea6"},
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/ff/d7/8d757f8bd45be079d76309248845a04f09619a7b17d6dfc8c9ff6433cac2/charset-normalizer-3.1.0.tar.gz", hash = "sha256:34e0a2f9c370eb95597aae63bf85eb5e96826d81e3dcf88b8886012906f509b5"},
 ]
+"click 8.1.3" = [
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/59/87/84326af34517fca8c58418d148f2403df25303e02736832403587318e9e8/click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/c2/f1/df59e28c642d583f7dacffb1e0965d0e00b218e0186d7858ac5233dce840/click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
+]
 "colorama 0.4.6" = [
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -588,6 +611,10 @@ content_hash = "sha256:d7f4d7b63aa9835d12c89b03a15a8f653b2a23ebf3f54c5647d2465e9
 ]
 "peewee 3.16.2" = [
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/a9/50/1dd5ea74c559df4afb8391f8d05f0fec685dbe8effba13bb9072901eb288/peewee-3.16.2.tar.gz", hash = "sha256:10769981198c7311f84a0ca8db892fa213303a8eb1305deb795a71e7bd606a91"},
+]
+"peewee-migrate 1.10.1" = [
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/1d/f6/57a8011fc7cb13910511b8044caaa15380e091caf1d7b6a5fd155375eb5c/peewee_migrate-1.10.1.tar.gz", hash = "sha256:54001ff775637c7066a8c91f49b088743b8432f17218143b65c09603c701f1ce"},
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/29/c5/8f039a905c6671d754066a842edaa4c8649fe9f9d1352ff8113634b71cf3/peewee_migrate-1.10.1-py3-none-any.whl", hash = "sha256:be86ec8478c0972fde57f9eb91dc3b2c74f2eb0bc3acd988d083137802a2cf20"},
 ]
 "pydantic 1.10.9" = [
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/02/05/1c505fd7cc174ddecd5aa956057638ba6039b584af6fa9687f11a074fca7/pydantic-1.10.9-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:83fcff3c7df7adff880622a98022626f4f6dbce6639a88a15a3ce0f96466cb60"},

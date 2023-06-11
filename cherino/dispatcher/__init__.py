@@ -1,6 +1,6 @@
 from aiogram import Dispatcher
 
-from cherino.dispatcher import admin, auth, normal, settings, add_question, spam
+from cherino.dispatcher import admin, auth, normal, settings, question, spam
 
 dp = Dispatcher()
 dp.include_routers(
@@ -8,6 +8,6 @@ dp.include_routers(
     auth.router,
     settings.router,
     normal.router,
-    add_question.router,
+    question.router,
     spam.router,
 )
