@@ -12,7 +12,7 @@ from cherino.database.db import db
 
 class Question(Model):
     id = AutoField()
-    # 群组 ID
+    # 创建该题目的群组 ID
     group = BigIntegerField(index=True)
     # 图片 ID（可选）
     image = TextField(null=True)
@@ -34,3 +34,15 @@ class Answer(Model):
 
     class Meta:
         database = db
+
+
+class QuestionGroup(Model):
+    id = AutoField()
+    # 使用该题库的群组
+    group = BigIntegerField(index=True)
+    # 题库 ID
+    question_group = ForeignKeyField(Question)
+
+    class Meta:
+        database = db
+        table_name = "question_group"

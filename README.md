@@ -6,9 +6,13 @@
 - 基本管理
   - /ban     - 封禁用户
   - /warn    - 警告用户
-  - /forgive - 原谅用户
 - 辅助管理
   - /report  - 举报用户
+  - /admin   - 召唤管理
+- 其他
+  - /ping         - pong~
+  - /settings     - 设置
+  - /add_question - 快速添加问题
 - 入群验证
 
 ## 部署
