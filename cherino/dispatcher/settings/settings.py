@@ -76,6 +76,7 @@ async def finish(callback: CallbackQuery, state: FSMContext):
     完成设置
     """
     await state.clear()
+    await callback.message.reply_to_message.delete()
     await callback.message.delete()
 
 
