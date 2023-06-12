@@ -100,9 +100,10 @@ async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler)
 
         for user in users:
             await restrict_user(chat.id, user.id, True, bot)
+            _, seconds = ban_time(message)
             # 超时后封禁用户
             scheduler.run_after(
-                chat.ban(user.id, timedelta(hours=1)),
+                chat.ban(user.id, timedelta(seconds=seconds)),
                 60,
                 job_id=f"auth:{message.chat.id}:{user.id}",
             )
@@ -254,9 +255,10 @@ async def on_user_join_group(message: Message, bot: Bot, scheduler: Scheduler):
             else:
                 reply = await message.reply(text=text, reply_markup=answer_markup)
 
+            _, seconds = ban_time(message)
             # 超时后封禁用户
             scheduler.run_after(
-                chat.ban(user.id, timedelta(hours=1)),
+                chat.ban(user.id, timedelta(seconds=seconds)),
                 60,
                 job_id=f"auth:{chat.id}:{user.id}",
             )
