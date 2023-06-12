@@ -47,6 +47,9 @@ def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
         text="删除入群问题", callback_data=SettingsCallback(action="delete_question").pack()
     )
     builder.button(
+        text="回答情况统计", callback_data=SettingsCallback(action="answer_statistics").pack()
+    )
+    builder.button(
         text=f"未入群用户发送媒体/链接 - {allow_nonauth_media}",
         callback_data=SettingsCallback(action="allow_nonauth_media").pack(),
     )

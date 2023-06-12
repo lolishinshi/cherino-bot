@@ -1,6 +1,6 @@
 from typing import Optional
 
-from peewee import fn
+from peewee import Case, fn
 
 from cherino.database.models import (
     Answer,
@@ -120,7 +120,7 @@ def add_group_question(chat_id: int, group_id: int):
     ).on_conflict_ignore().execute()
 
 
-def answer_stats(chat_id: int) -> list[tuple[Question, int, int]]:
+def get_answer_stats(chat_id: int) -> list[tuple[Question, int, int]]:
     """
     查询当前群组题库的回答状态，返回一个列表，每个元素为一个三元组：题目、总回答、正确回答
     """
@@ -129,7 +129,7 @@ def answer_stats(chat_id: int) -> list[tuple[Question, int, int]]:
             AnswerHistory.question,
             fn.COUNT(AnswerHistory.question),
             fn.SUM(
-                fn.CASE(
+                Case(
                     None,
                     ((AnswerHistory.answer == Question.correct_answer, 1),),
                     0,

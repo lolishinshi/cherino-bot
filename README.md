@@ -17,6 +17,23 @@
 
 ## 部署
 
+1. 创建 config.toml
+
+```toml
+# Telegram Bot Token
+token = "xxxxxxx"
+# 数据库 URL
+db_url = "sqlite:///db.sqlite"
+```
+
+2. 创建数据库
+
+```
+touch db.sqlite
+```
+
+3. 使用 docker-compose 直接构建并启动
+
 ```shell
 docker-compose up --build -d --force-recreate
 ```
