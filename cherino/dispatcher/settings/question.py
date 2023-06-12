@@ -8,6 +8,7 @@ from cherino import crud
 from cherino.filters import IsAdmin
 from cherino.scheduler import Scheduler
 from cherino.utils.message import add_question_from_message
+from cherino.utils.pager import AbstractPager, PagerCallback
 
 from .settings import SettingsCallback, SettingState
 
@@ -50,34 +51,32 @@ async def process_add_question(message: Message, scheduler: Scheduler, bot: Bot)
 @router.callback_query(
     SettingsCallback.filter(F.action == "delete_question"), IsAdmin()
 )
-async def setting_delete_question(
-    query: CallbackQuery, callback_data: SettingsCallback
-):
-    """
-    删除入群问题
-    """
-    try:
-        if callback_data.data is not None:
-            crud.auth.delete_question(query.message.chat.id, int(callback_data.data))
+@router.callback_query(PagerCallback.filter(F.name == "delete_question"), IsAdmin())
+class DeleteQuestionPager(AbstractPager):
+    @property
+    def text(self) -> str:
+        return "请选择需要删除的问题"
 
-        question = crud.auth.get_all_questions(query.message.chat.id)
+    @property
+    def name(self) -> str:
+        return "delete_question"
+
+    def get_page(self, page: int = 0) -> InlineKeyboardBuilder:
+        callback_data = self.data["callback_data"]
+        if isinstance(callback_data, SettingsCallback) and callback_data.data:
+            crud.auth.delete_question(self.message.chat.id, int(callback_data.data))
+
         builder = InlineKeyboardBuilder()
-        for q in question:
+        question = crud.auth.get_all_questions(self.message.chat.id)
+        for q in question[page * 20 : (page + 1) * 20]:
             builder.button(
                 text=f"{q.description} - {q.correct_answer.description}",
-                callback_data=SettingsCallback(
-                    action="delete_question", data=q.id
-                ).pack(),
+                callback_data=SettingsCallback(action="delete_question", data=q.id),
             )
         builder.button(
             text="返回", callback_data=SettingsCallback(action="backward").pack()
         )
-        builder.adjust(1, repeat=True)
-        await query.message.edit_text(
-            text="请选择需要删除的问题", reply_markup=builder.as_markup()
-        )
-    except Exception as e:
-        logger.warning("删除入群问题失败: {}", e)
+        return builder
 
 
 @router.callback_query(
@@ -92,7 +91,7 @@ async def setting_answer_statistics(query: CallbackQuery):
         texts = []
         for q, total, correct in questions:
             texts.append(
-                f"{correct/total*100:.1f}% - {correct}/{total} - {q.description} - {q.correct_answer.description}"
+                f"{correct / total * 100:.1f}% - {correct}/{total} - {q.description} - {q.correct_answer.description}"
             )
         text = "\n".join(texts)
         builder = InlineKeyboardBuilder()

@@ -22,7 +22,7 @@ def add_question(
         group=chat_id, description=description, image=image, correct_answer=0
     )
     GroupQuestion.insert(
-        group=chat_id, questions=question
+        group=chat_id, questions=question.group
     ).on_conflict_ignore().execute()
 
     correct_answer, *other_answers = answers
