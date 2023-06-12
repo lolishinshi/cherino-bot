@@ -27,10 +27,10 @@ class SettingsCallback(CallbackData, prefix="settings"):
 
 
 def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
-    allow_join = get_setting(chat_id, Settings.ALLOW_JOIN, "yes")
-    auth_type = get_setting(chat_id, Settings.AUTH_TYPE, "私聊")
-    allow_nonauth_media = get_setting(chat_id, Settings.ALLOW_NOAUTH_MEDIA, "yes")
-    ban_time = get_setting(chat_id, Settings.BAN_TIME, "1h")
+    allow_join = get_setting(chat_id, Settings.ALLOW_JOIN)
+    auth_type = get_setting(chat_id, Settings.AUTH_TYPE)
+    allow_nonauth_media = get_setting(chat_id, Settings.ALLOW_NOAUTH_MEDIA)
+    ban_time = get_setting(chat_id, Settings.BAN_TIME)
 
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -102,7 +102,7 @@ async def callback_allow_join(callback: CallbackQuery):
     """
     更改是否允许加入
     """
-    t = get_setting(callback.message.chat.id, Settings.ALLOW_JOIN, "yes")
+    t = get_setting(callback.message.chat.id, Settings.ALLOW_JOIN)
     t = "no" if t == "yes" else "yes"
     set_setting(callback.message.chat.id, Settings.ALLOW_JOIN, t)
     await open_settings(callback)
@@ -113,7 +113,7 @@ async def callback_auth_type(callback: CallbackQuery):
     """
     更改验证方式
     """
-    t = get_setting(callback.message.chat.id, Settings.AUTH_TYPE, "私聊")
+    t = get_setting(callback.message.chat.id, Settings.AUTH_TYPE)
     t = "私聊" if t == "群内" else "群内"
     set_setting(callback.message.chat.id, Settings.AUTH_TYPE, t)
     await open_settings(callback)
@@ -126,7 +126,7 @@ async def callback_allow_nonauth_media(callback: CallbackQuery):
     """
     更改是否允许未验证媒体
     """
-    t = get_setting(callback.message.chat.id, Settings.ALLOW_NOAUTH_MEDIA, "yes")
+    t = get_setting(callback.message.chat.id, Settings.ALLOW_NOAUTH_MEDIA)
     t = "no" if t == "yes" else "yes"
     set_setting(callback.message.chat.id, Settings.ALLOW_NOAUTH_MEDIA, t)
     await open_settings(callback)

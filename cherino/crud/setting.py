@@ -11,16 +11,22 @@ class Settings(str, Enum):
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
 
 
-def get_setting(
-    chat_id: int, key: Settings, default: Optional[str] = None
-) -> Optional[str]:
+DEFAULT_VALUE = {
+    Settings.ALLOW_JOIN: "yes",
+    Settings.AUTH_TYPE: "群内",
+    Settings.BAN_TIME: "1h",
+    Settings.ALLOW_NOAUTH_MEDIA: "yes",
+}
+
+
+def get_setting(chat_id: int, key: Settings) -> Optional[str]:
     """
     获取一个设置
     """
     if setting := Setting.get_or_none(Setting.group == chat_id, Setting.key == key):
         return setting.value
     else:
-        return default
+        return DEFAULT_VALUE[key]
 
 
 def set_setting(chat_id: int, key: Settings, value: str):

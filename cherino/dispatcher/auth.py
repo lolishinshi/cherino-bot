@@ -21,15 +21,15 @@ router = Router()
 
 
 def can_join(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.ALLOW_JOIN, "yes") == "yes"
+    return get_setting(message.chat.id, Settings.ALLOW_JOIN) == "yes"
 
 
 def auth_in_group(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.AUTH_TYPE, "私聊") == "群内"
+    return get_setting(message.chat.id, Settings.AUTH_TYPE) == "群内"
 
 
 def ban_time(message: Message) -> tuple[str, int]:
-    t = get_setting(message.chat.id, Settings.BAN_TIME, "1h")
+    t = get_setting(message.chat.id, Settings.BAN_TIME)
     return t, parsetime(t)
 
 
