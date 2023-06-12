@@ -36,7 +36,9 @@ with suppress(ImportError):
 
 def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
     """Write your migrations here."""
-    migrator.sql('INSERT INTO question_group SELECT DISTINCT "group", "group" FROM question')
+    migrator.sql(
+        'INSERT INTO group_question ("group", questions) SELECT DISTINCT "group", "group" FROM question'
+    )
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):

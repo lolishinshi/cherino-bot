@@ -1,6 +1,6 @@
 [project]
 name = "cherino"
-version = "0.1.1"
+version = "0.2.0"
 description = "Telegram 群组管理 bot"
 authors = [
     {name = "Aloxaf", email = "Aloxafx@gmail.com"},
@@ -27,3 +27,8 @@ cherino = "cherino.__main__:main"
 [tool.pdm.scripts]
 start.cmd = "pdm run python -m cherino"
 pwm_create.cmd = "pdm run pw_migrate create --database 'sqlite://./db.sqlite' --directory cherino/database/migrations"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=7.3.2",
+]

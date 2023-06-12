@@ -1,6 +1,7 @@
 from peewee import (
     AutoField,
     BigIntegerField,
+    CompositeKey,
     DeferredForeignKey,
     ForeignKeyField,
     Model,
@@ -36,13 +37,14 @@ class Answer(Model):
         database = db
 
 
-class QuestionGroup(Model):
+class GroupQuestion(Model):
     id = AutoField()
     # 使用该题库的群组
     group = BigIntegerField(index=True)
     # 题库 ID
-    question_group = ForeignKeyField(Question)
+    questions = BigIntegerField()
 
     class Meta:
         database = db
-        table_name = "question_group"
+        table_name = "group_question"
+        indexes = ((("group", "questions"), True),)
