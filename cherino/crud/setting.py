@@ -1,9 +1,19 @@
 from typing import Optional
+from enum import Enum
 
 from cherino.database.models import Setting
 
 
-def get_setting(chat_id: int, key: str, default: Optional[str] = None) -> Optional[str]:
+class Settings(str, Enum):
+    ALLOW_JOIN = "allow_join"
+    AUTH_TYPE = "auth_type"
+    BAN_TIME = "ban_time"
+    ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
+
+
+def get_setting(
+    chat_id: int, key: Settings, default: Optional[str] = None
+) -> Optional[str]:
     """
     获取一个设置
     """
@@ -13,7 +23,7 @@ def get_setting(chat_id: int, key: str, default: Optional[str] = None) -> Option
         return default
 
 
-def set_setting(chat_id: int, key: str, value: str):
+def set_setting(chat_id: int, key: Settings, value: str):
     """
     设置一个设置
     """

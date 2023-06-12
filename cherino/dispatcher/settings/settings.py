@@ -1,6 +1,6 @@
 from typing import Optional
 
-from aiogram import F, Router
+from aiogram import F, Router, Bot
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
@@ -9,14 +9,16 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
-from cherino import crud
+from cherino.crud.setting import get_setting, set_setting, Settings
 from cherino.filters import IsAdmin
+from cherino.scheduler import Scheduler
 
 router = Router()
 
 
 class SettingState(StatesGroup):
     add_question = State()
+    edit_ban_time = State()
 
 
 class SettingsCallback(CallbackData, prefix="settings"):
@@ -25,11 +27,10 @@ class SettingsCallback(CallbackData, prefix="settings"):
 
 
 def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
-    allow_join = crud.setting.get_setting(chat_id, "allow_join", "yes")
-    auth_type = crud.setting.get_setting(chat_id, "auth_type", "私聊")
-    allow_nonauth_media = crud.setting.get_setting(
-        chat_id, "allow_nonauth_media", "yes"
-    )
+    allow_join = get_setting(chat_id, Settings.ALLOW_JOIN, "yes")
+    auth_type = get_setting(chat_id, Settings.AUTH_TYPE, "私聊")
+    allow_nonauth_media = get_setting(chat_id, Settings.ALLOW_NOAUTH_MEDIA, "yes")
+    ban_time = get_setting(chat_id, Settings.BAN_TIME, "1h")
 
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -39,6 +40,10 @@ def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
     builder.button(
         text=f"验证方式 - {auth_type}",
         callback_data=SettingsCallback(action="auth_type").pack(),
+    )
+    builder.button(
+        text=f"封禁时长 - {ban_time}",
+        callback_data=SettingsCallback(action="ban_time").pack(),
     )
     builder.button(
         text="添加入群问题", callback_data=SettingsCallback(action="add_question").pack()
@@ -97,9 +102,9 @@ async def callback_allow_join(callback: CallbackQuery):
     """
     更改是否允许加入
     """
-    t = crud.setting.get_setting(callback.message.chat.id, "allow_join", "yes")
+    t = get_setting(callback.message.chat.id, Settings.ALLOW_JOIN, "yes")
     t = "no" if t == "yes" else "yes"
-    crud.setting.set_setting(callback.message.chat.id, "allow_join", t)
+    set_setting(callback.message.chat.id, Settings.ALLOW_JOIN, t)
     await open_settings(callback)
 
 
@@ -108,9 +113,9 @@ async def callback_auth_type(callback: CallbackQuery):
     """
     更改验证方式
     """
-    t = crud.setting.get_setting(callback.message.chat.id, "auth_type", "私聊")
+    t = get_setting(callback.message.chat.id, Settings.AUTH_TYPE, "私聊")
     t = "私聊" if t == "群内" else "群内"
-    crud.setting.set_setting(callback.message.chat.id, "auth_type", t)
+    set_setting(callback.message.chat.id, Settings.AUTH_TYPE, t)
     await open_settings(callback)
 
 
@@ -121,7 +126,33 @@ async def callback_allow_nonauth_media(callback: CallbackQuery):
     """
     更改是否允许未验证媒体
     """
-    t = crud.setting.get_setting(callback.message.chat.id, "allow_nonauth_media", "yes")
+    t = get_setting(callback.message.chat.id, Settings.ALLOW_NOAUTH_MEDIA, "yes")
     t = "no" if t == "yes" else "yes"
-    crud.setting.set_setting(callback.message.chat.id, "allow_nonauth_media", t)
+    set_setting(callback.message.chat.id, Settings.ALLOW_NOAUTH_MEDIA, t)
     await open_settings(callback)
+
+
+@router.callback_query(SettingsCallback.filter(F.action == "ban_time"), IsAdmin())
+async def callback_ban_time(callback: CallbackQuery, state: FSMContext):
+    """
+    更改封禁时长
+    """
+    builder = InlineKeyboardBuilder()
+    builder.button(text="返回", callback_data=SettingsCallback(action="backward").pack())
+    await callback.message.edit_text(
+        "请回复封禁时长，如 1h、1d，超过 366d 或小于 30s 会视为永久封禁",
+        reply_markup=builder.as_markup(),
+    )
+    await state.set_state(SettingState.edit_ban_time)
+    await state.update_data()
+
+
+@router.message(SettingState.edit_ban_time, IsAdmin())
+async def process_edit_ban_time(message: Message, scheduler: Scheduler):
+    """
+    修改封禁时长
+    """
+    set_setting(message.chat.id, Settings.BAN_TIME, message.text.strip())
+    reply = await message.reply("已修改，你可以选择重新修改或者点击返回")
+    scheduler.run_after(message.delete(), 5, str(message.message_id))
+    scheduler.run_after(reply.delete(), 5, str(reply.message_id))

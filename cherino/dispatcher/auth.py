@@ -8,8 +8,10 @@ from aiogram.types import CallbackQuery, ContentType, InlineKeyboardMarkup, Mess
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
+from pytimeparse import parse as parsetime
 
-from cherino import crud
+from cherino.crud import auth
+from cherino.crud.setting import get_setting, Settings
 from cherino.database.models import Question
 from cherino.filters import MemberJoin
 from cherino.scheduler import Scheduler
@@ -19,15 +21,20 @@ router = Router()
 
 
 def can_join(message: Message) -> bool:
-    return crud.setting.get_setting(message.chat.id, "allow_join", "yes") == "yes"
+    return get_setting(message.chat.id, Settings.ALLOW_JOIN, "yes") == "yes"
 
 
 def auth_in_group(message: Message) -> bool:
-    return crud.setting.get_setting(message.chat.id, "auth_type", "私聊") == "群内"
+    return get_setting(message.chat.id, Settings.AUTH_TYPE, "私聊") == "群内"
+
+
+def ban_time(message: Message) -> tuple[str, int]:
+    t = get_setting(message.chat.id, Settings.BAN_TIME, "1h")
+    return t, parsetime(t)
 
 
 def get_question(chat_id: int, user_id: int) -> tuple[Question, InlineKeyboardMarkup]:
-    question, answers = crud.auth.get_question(chat_id)
+    question, answers = auth.get_question(chat_id)
     builder = InlineKeyboardBuilder()
     for answer in answers:
         builder.button(
@@ -88,7 +95,7 @@ async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler)
     chat = message.chat
 
     try:
-        if not crud.auth.get_question(message.chat.id):
+        if not auth.get_question(message.chat.id):
             return
 
         for user in users:
@@ -99,7 +106,7 @@ async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler)
                 60,
                 job_id=f"auth:{message.chat.id}:{user.id}",
             )
-            crud.auth.add_pending_verify(chat.id, user.id)
+            auth.add_pending_verify(chat.id, user.id)
 
         builder = InlineKeyboardBuilder()
         builder.button(text="前往审查", url=await create_start_link(bot, str(chat.id)))
@@ -134,7 +141,7 @@ async def cmd_start(message: Message, command: CommandObject):
 
         question, answer_markup = get_question(chat_id, user.id)
 
-        pending_verify = crud.auth.get_pending_verify(chat_id, user.id)
+        pending_verify = auth.get_pending_verify(chat_id, user.id)
         if not pending_verify:
             await message.reply("你当前没有待进行的审查")
             return
@@ -171,7 +178,7 @@ async def callback_auth_private(
     """
 
     try:
-        pending_verify = crud.auth.get_pending_verify(
+        pending_verify = auth.get_pending_verify(
             callback_data.group, query.from_user.id
         )
         if (
@@ -183,13 +190,14 @@ async def callback_auth_private(
             return
         pending_verify.delete_instance()
 
-        success = crud.auth.add_answer(
+        success = auth.add_answer(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            await query.answer("很抱歉，回答错误，您将被移除本群。请 1 小时候再重试。")
+            timestr, timeseconds = ban_time(query.message)
+            await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
             await bot.ban_chat_member(
-                callback_data.group, query.from_user.id, timedelta(hours=1)
+                callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
             )
             # 验证失败，立即删除入群消息
             scheduler.trigger(
@@ -210,7 +218,7 @@ async def callback_auth_private(
         logger.error("入群验证回调失败: {}", e)
 
     # 如果当前已经没有待验证用户了，则可以立即删除验证消息
-    if len(crud.auth.get_pending_verify(callback_data.group)) == 0:
+    if len(auth.get_pending_verify(callback_data.group)) == 0:
         scheduler.trigger(f"auth:delete-welcome:{callback_data.group}")
 
 
@@ -230,7 +238,7 @@ async def on_user_join_group(message: Message, bot: Bot, scheduler: Scheduler):
     chat = message.chat
 
     try:
-        if not crud.auth.get_question(chat.id):
+        if not auth.get_question(chat.id):
             return
 
         for user in users:
@@ -282,13 +290,14 @@ async def callback_auth_group(
             await query.answer("同志，请不要干扰我们工作！")
             return
 
-        success = crud.auth.add_answer(
+        success = auth.add_answer(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            await query.answer("很抱歉，回答错误，您将被移除本群。请 1 小时候再重试。")
+            timestr, timeseconds = ban_time(query.message)
+            await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
             await bot.ban_chat_member(
-                callback_data.group, query.from_user.id, timedelta(hours=1)
+                callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
             )
             # 立即删除加入群组消息
             scheduler.trigger(

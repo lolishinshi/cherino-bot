@@ -207,6 +207,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "pytimeparse"
+version = "1.1.8"
+summary = "Time expression parser"
+
+[[package]]
 name = "pytz"
 version = "2023.3"
 summary = "World timezone definitions, modern and historical"
@@ -276,7 +281,7 @@ dependencies = [
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "dev"]
-content_hash = "sha256:3a0772c079f0a3a8222190ecfa4db348d9862132a7da1c386ce6674312109292"
+content_hash = "sha256:502fb20493566883d3dd8640dc057624a33e3b388912431c0b99935b91ed868f"
 
 [metadata.files]
 "aiofiles 23.1.0" = [
@@ -717,6 +722,10 @@ content_hash = "sha256:3a0772c079f0a3a8222190ecfa4db348d9862132a7da1c386ce667431
 "pytest 7.3.2" = [
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/58/2a/07c65fdc40846ecb8a9dcda2c38fcb5a06a3e39d08d4a4960916431951cb/pytest-7.3.2.tar.gz", hash = "sha256:ee990a3cc55ba808b80795a79944756f315c67c12b56abd3ac993a7b8c17030b"},
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/7a/d0/de969198293cdea22b3a6fb99a99aeeddb7b3827f0823b33c5dc0734bbe5/pytest-7.3.2-py3-none-any.whl", hash = "sha256:cdcbd012c9312258922f8cd3f1b62a6580fdced17db6014896053d47cddf9295"},
+]
+"pytimeparse 1.1.8" = [
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/1b/b4/afd75551a3b910abd1d922dbd45e49e5deeb4d47dc50209ce489ba9844dd/pytimeparse-1.1.8-py2.py3-none-any.whl", hash = "sha256:04b7be6cc8bd9f5647a6325444926c3ac34ee6bc7e69da4367ba282f076036bd"},
+    {url = "https://mirrors.cloud.tencent.com/pypi/packages/37/5d/231f5f33c81e09682708fb323f9e4041408d8223e2f0fb9742843328778f/pytimeparse-1.1.8.tar.gz", hash = "sha256:e86136477be924d7e670646a98561957e8ca7308d44841e21f5ddea757556a0a"},
 ]
 "pytz 2023.3" = [
     {url = "https://mirrors.cloud.tencent.com/pypi/packages/5e/32/12032aa8c673ee16707a9b6cdda2b09c0089131f35af55d443b6a9c69c1d/pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},

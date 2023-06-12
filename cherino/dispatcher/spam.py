@@ -1,18 +1,15 @@
-from aiogram import F, Bot, Router
-from aiogram.types import ContentType, Message
-from aiogram.enums import ChatType
+from aiogram import F, Router
+from aiogram.types import Message
 from loguru import logger
 
-from cherino import crud
+from cherino.crud.setting import get_setting, Settings
 from cherino.filters import IsGroup, IsMember, HasLink, HasMedia
 
 router = Router()
 
 
 def allow_nonauth_media(message: Message) -> bool:
-    return (
-        crud.setting.get_setting(message.chat.id, "allow_nonauth_media", "yes") == "yes"
-    )
+    return get_setting(message.chat.id, Settings.ALLOW_NOAUTH_MEDIA, "yes") == "yes"
 
 
 @router.message(IsGroup(), ~IsMember(), HasMedia(), ~F.func(allow_nonauth_media))
