@@ -37,10 +37,24 @@ def get_all_questions(chat_id: int) -> list[Question]:
     """
     获取所有入群问题
     """
-    return list(
-        Question.select()
-        .join(GroupQuestion, on=(Question.group == GroupQuestion.questions))
-        .where(GroupQuestion.group == chat_id)
+    return list(Question.select().where(GroupQuestion.group == chat_id))
+
+
+def get_question_group(chat_id: int) -> list[GroupQuestion]:
+    """
+    获取问题组
+    """
+    return list(GroupQuestion.select().where(GroupQuestion.group == chat_id))
+
+
+def delete_question_group(chat_id: int, question_id: int) -> list[GroupQuestion]:
+    """
+    删除问题组
+    """
+    if chat_id == question_id:
+        return
+    GroupQuestion.delete().where(
+        GroupQuestion.group == chat_id, GroupQuestion.id == question_id
     )
 
 

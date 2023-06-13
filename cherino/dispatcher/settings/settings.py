@@ -46,20 +46,24 @@ def settings_keyboard(chat_id: int) -> InlineKeyboardMarkup:
         callback_data=SettingsCallback(action="ban_time").pack(),
     )
     builder.button(
+        text=f"未入群用户发送媒体/链接 - {allow_nonauth_media}",
+        callback_data=SettingsCallback(action="allow_nonauth_media").pack(),
+    )
+    builder.button(
         text="添加入群问题", callback_data=SettingsCallback(action="add_question").pack()
     )
     builder.button(
         text="删除入群问题", callback_data=SettingsCallback(action="delete_question").pack()
     )
     builder.button(
-        text="回答情况统计", callback_data=SettingsCallback(action="answer_statistics").pack()
+        text="删除问题组",
+        callback_data=SettingsCallback(action="delete_question_group").pack(),
     )
     builder.button(
-        text=f"未入群用户发送媒体/链接 - {allow_nonauth_media}",
-        callback_data=SettingsCallback(action="allow_nonauth_media").pack(),
+        text="回答情况统计", callback_data=SettingsCallback(action="answer_statistics").pack()
     )
     builder.button(text="完成", callback_data=SettingsCallback(action="finish").pack())
-    builder.adjust(1, repeat=True)
+    builder.adjust(2, 2, 2, 2, 1)
     return builder.as_markup()
 
 

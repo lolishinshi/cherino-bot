@@ -80,6 +80,41 @@ class DeleteQuestionPager(AbstractPager):
 
 
 @router.callback_query(
+    SettingsCallback.filter(F.action == "delete_question_group"), IsAdmin()
+)
+async def setting_delete_question_group(
+    callback: CallbackQuery, bot: Bot, callback_data: SettingsCallback
+):
+    """
+    删除一个问题组
+    """
+    if callback_data.data is not None:
+        crud.auth.delete_question_group(
+            callback.message.chat.id, int(callback_data.data)
+        )
+
+    builder = InlineKeyboardBuilder()
+    groups = crud.auth.get_question_group(callback.message.chat.id)
+    for g in groups:
+        chat_name = str(g.questions)
+        try:
+            chat_name = (await bot.get_chat(g.questions)).full_name
+        except:
+            pass
+        builder.button(
+            text=chat_name,
+            callback_data=SettingsCallback(
+                action="delete_question_group", data=g.questions
+            ),
+        )
+    builder.button(text="返回", callback_data=SettingsCallback(action="backward").pack())
+    builder.adjust(1)
+    await callback.message.edit_text(
+        text="以下是当前群组关联的问题组，点击以删除", reply_markup=builder.as_markup()
+    )
+
+
+@router.callback_query(
     SettingsCallback.filter(F.action == "answer_statistics"), IsAdmin()
 )
 async def setting_answer_statistics(query: CallbackQuery):
