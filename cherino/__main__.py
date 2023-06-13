@@ -12,7 +12,9 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     scheduler = Scheduler()
     bot = Bot(CONFIG.token, parse_mode="HTML")
-    await dp.start_polling(bot, scheduler=scheduler, allowed_updates=[])
+    await dp.start_polling(
+        bot, scheduler=scheduler, allowed_updates=dp.resolve_used_update_types()
+    )
 
 
 if __name__ == "__main__":

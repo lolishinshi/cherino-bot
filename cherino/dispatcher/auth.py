@@ -2,9 +2,20 @@ from asyncio import sleep
 from datetime import datetime, timedelta
 
 from aiogram import Bot, F, Router
-from aiogram.filters import CommandObject, CommandStart
+from aiogram.filters import (
+    CommandObject,
+    CommandStart,
+    ChatMemberUpdatedFilter,
+    JOIN_TRANSITION,
+)
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import CallbackQuery, ContentType, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    ContentType,
+    InlineKeyboardMarkup,
+    Message,
+    ChatMemberUpdated,
+)
 from aiogram.utils.deep_linking import create_start_link
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
@@ -15,21 +26,21 @@ from cherino.crud.setting import get_setting, Settings
 from cherino.database.models import Question
 from cherino.filters import MemberJoin
 from cherino.scheduler import Scheduler
-from cherino.utils.user import restrict_user
+from cherino.utils.user import get_admin, restrict_user
 
 router = Router()
 
 
-def can_join(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.ALLOW_JOIN) == "yes"
+def can_join(event: ChatMemberUpdated) -> bool:
+    return get_setting(event.chat.id, Settings.ALLOW_JOIN) == "yes"
 
 
-def auth_in_group(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.AUTH_TYPE) == "群内"
+def auth_in_group(event: ChatMemberUpdated) -> bool:
+    return get_setting(event.chat.id, Settings.AUTH_TYPE) == "群内"
 
 
-def ban_time(message: Message) -> tuple[str, int]:
-    t = get_setting(message.chat.id, Settings.BAN_TIME)
+def ban_time(chat_id: int) -> tuple[str, int]:
+    t = get_setting(chat_id, Settings.BAN_TIME)
     return t, parsetime(t)
 
 
@@ -79,52 +90,53 @@ async def on_user_join_deny(message: Message):
         logger.warning("入群验证失败：{}", e)
 
 
-@router.message(
-    F.content_type == ContentType.NEW_CHAT_MEMBERS,
-    MemberJoin(),
+@router.chat_member(
+    ChatMemberUpdatedFilter(JOIN_TRANSITION),
     F.func(can_join),
     ~F.func(auth_in_group),
+    ~F.new_chat_member.user.is_bot,
 )
-async def on_user_join_private(message: Message, bot: Bot, scheduler: Scheduler):
+async def on_user_join_private(
+    event: ChatMemberUpdated, bot: Bot, scheduler: Scheduler
+):
     """
     入群验证 - 私聊
     """
-    logger.info("入群验证：{} - {}", message.chat.id, message.from_user.id)
+    logger.info("入群验证：{} - {}", event.chat.id, event.from_user.id)
 
-    users = [user for user in message.new_chat_members if not user.is_bot]
-    chat = message.chat
+    admins = await get_admin(event.chat.id, bot)
+    if event.from_user.id in admins:
+        return
+
+    user = event.new_chat_member.user
+    chat = event.chat
 
     try:
-        if not auth.get_question(message.chat.id):
+        if not auth.get_question(event.chat.id):
             return
 
-        for user in users:
-            await restrict_user(chat.id, user.id, True, bot)
-            _, seconds = ban_time(message)
-            # 超时后封禁用户
-            scheduler.run_after(
-                chat.ban(user.id, timedelta(seconds=seconds)),
-                60,
-                job_id=f"auth:{message.chat.id}:{user.id}",
-            )
-            auth.add_pending_verify(chat.id, user.id)
+        await restrict_user(chat.id, user.id, True, bot)
+        _, seconds = ban_time(chat.id)
+        # 超时后封禁用户
+        scheduler.run_after(
+            chat.ban(user.id, timedelta(seconds=seconds)),
+            60,
+            job_id=f"auth:{chat.id}:{user.id}",
+        )
+        auth.add_pending_verify(chat.id, user.id)
 
         builder = InlineKeyboardBuilder()
         builder.button(text="前往审查", url=await create_start_link(bot, str(chat.id)))
 
         reply = await bot.send_message(
             chat.id,
-            "新加入的同志，请在 60s 内点击下方按钮并完成审查".format(),
+            "新加入的同志 {}，请在 60s 内点击下方按钮并完成审查".format(user.mention_html()),
             reply_markup=builder.as_markup(),
         )
 
         # 准备在超时后删除验证消息
         scheduler.run_single(
-            reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}"
-        )
-        # 准备在超时后删除入群信息
-        scheduler.run_after(
-            message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+            reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}:{user.id}"
         )
 
     except Exception as e:
@@ -136,6 +148,9 @@ async def cmd_start(message: Message, command: CommandObject):
     """
     处理通过 deep link 跳转过来的用户验证请求
     """
+    if not command.args:
+        return
+
     try:
         chat_id = int(command.args)
         user = message.from_user
@@ -143,7 +158,7 @@ async def cmd_start(message: Message, command: CommandObject):
         question, answer_markup = get_question(chat_id, user.id)
 
         pending_verify = auth.get_pending_verify(chat_id, user.id)
-        if not pending_verify:
+        if not pending_verify or pending_verify.triggered:
             await message.reply("你当前没有待进行的审查")
             return
         if pending_verify.created_at + timedelta(seconds=60) < datetime.now():
@@ -163,6 +178,9 @@ async def cmd_start(message: Message, command: CommandObject):
                 reply_markup=answer_markup,
             )
 
+        pending_verify.triggered = True
+        pending_verify.save()
+
     except Exception as e:
         logger.error("入群验证失败: {}", e)
 
@@ -175,7 +193,7 @@ async def callback_auth_private(
     bot: Bot,
 ):
     """
-    入群验证回调
+    入群验证回调 - 私聊
     """
 
     try:
@@ -195,7 +213,7 @@ async def callback_auth_private(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            timestr, timeseconds = ban_time(query.message)
+            timestr, timeseconds = ban_time(callback_data.group)
             await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
             await bot.ban_chat_member(
                 callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
@@ -215,66 +233,82 @@ async def callback_auth_private(
         await query.message.delete()
         # 取消超时后封禁用用户的任务
         scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
+        # 立即删除欢迎消息
+        scheduler.trigger(
+            f"auth:delete-welcome:{callback_data.group}:{query.from_user.id}"
+        )
+
     except Exception as e:
         logger.error("入群验证回调失败: {}", e)
 
-    # 如果当前已经没有待验证用户了，则可以立即删除验证消息
-    if len(auth.get_pending_verify(callback_data.group)) == 0:
-        scheduler.trigger(f"auth:delete-welcome:{callback_data.group}")
+
+@router.message(F.content_type == ContentType.NEW_CHAT_MEMBERS)
+async def on_message_new_chat_members(message: Message, scheduler: Scheduler):
+    chat = message.chat
+    users = [user for user in message.new_chat_members if not user.is_bot]
+    # 超时后删除入群信息
+    # NOTE: 多位用户入群时此处只考虑第一位用户的认证状态
+    scheduler.run_after(
+        message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+    )
 
 
-@router.message(
-    F.content_type == ContentType.NEW_CHAT_MEMBERS,
-    MemberJoin(),
+@router.chat_member(
+    ChatMemberUpdatedFilter(JOIN_TRANSITION),
     F.func(can_join),
     F.func(auth_in_group),
+    ~F.new_chat_member.user.is_bot,
 )
-async def on_user_join_group(message: Message, bot: Bot, scheduler: Scheduler):
+async def on_user_join_group(event: ChatMemberUpdated, bot: Bot, scheduler: Scheduler):
     """
     入群验证 - 群内
     """
-    logger.info("入群验证：{} - {}", message.chat.id, message.from_user.id)
+    logger.info("入群验证：{} - {}", event.chat.id, event.from_user.id)
 
-    users = [user for user in message.new_chat_members if not user.is_bot]
-    chat = message.chat
+    admins = await get_admin(event.chat.id, bot)
+    if event.from_user.id in admins:
+        return
+
+    user = event.new_chat_member.user
+    chat = event.chat
 
     try:
         if not auth.get_question(chat.id):
             return
 
-        for user in users:
-            await restrict_user(chat.id, user.id, True, bot)
+        await restrict_user(chat.id, user.id, True, bot)
 
-            question, answer_markup = get_question(chat.id, user.id)
-            text = "新加入的同志，请在 60s 内回答下列问题\n{}".format(question.description)
+        question, answer_markup = get_question(chat.id, user.id)
+        text = "新加入的同志 {}，请在 60s 内回答下列问题\n{}".format(
+            user.mention_html(), question.description
+        )
 
-            if question.image:
-                reply = await message.reply_photo(
-                    photo=question.image, caption=text, reply_markup=answer_markup
-                )
-            else:
-                reply = await message.reply(text=text, reply_markup=answer_markup)
-
-            _, seconds = ban_time(message)
-            # 超时后封禁用户
-            scheduler.run_after(
-                chat.ban(user.id, timedelta(seconds=seconds)),
-                60,
-                job_id=f"auth:{chat.id}:{user.id}",
+        if question.image:
+            reply = await bot.send_photo(
+                chat_id=chat.id,
+                photo=question.image,
+                caption=text,
+                reply_markup=answer_markup,
             )
-            # 超时后删除验证消息
-            scheduler.run_after(
-                reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}:{user.id}"
+        else:
+            reply = await bot.send_message(
+                chat_id=chat.id, text=text, reply_markup=answer_markup
             )
 
-        # 超时后删除入群信息
-        # NOTE: 多位用户入群时此处只考虑第一位用户的认证状态
+        _, seconds = ban_time(chat.id)
+        # 超时后封禁用户
         scheduler.run_after(
-            message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+            chat.ban(user.id, timedelta(seconds=seconds)),
+            60,
+            job_id=f"auth:{chat.id}:{user.id}",
+        )
+        # 超时后删除验证消息
+        scheduler.run_after(
+            reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}:{user.id}"
         )
 
     except Exception as e:
-        logger.warning("入群提示失败: {}", e)
+        logger.exception("入群提示失败: {}", e)
 
 
 @router.callback_query(UserAuthCallback.filter(), F.message.func(auth_in_group))
@@ -285,7 +319,7 @@ async def callback_auth_group(
     bot: Bot,
 ):
     """
-    入群验证回调
+    入群验证回调 - 群组
     """
     try:
         if query.from_user.id != callback_data.user:
@@ -296,7 +330,7 @@ async def callback_auth_group(
             query.from_user.id, callback_data.question, callback_data.answer
         )
         if not success:
-            timestr, timeseconds = ban_time(query.message)
+            timestr, timeseconds = ban_time(query.message.chat.id)
             await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
             await bot.ban_chat_member(
                 callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
