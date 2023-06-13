@@ -38,9 +38,10 @@ def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
     """Write your migrations here."""
     migrator.sql("UPDATE setting SET value = 'true' WHERE value = 'no'")
     migrator.sql("UPDATE setting SET value = 'false' WHERE value = 'yes'")
-    migrator.sql("UPDATE setting SET value = '\"' || value || '\"' WHERE value NOT IN ('true', 'false')")
+    migrator.sql(
+        "UPDATE setting SET value = '\"' || value || '\"' WHERE value NOT IN ('true', 'false')"
+    )
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
     """Write your rollback migrations here."""
-    

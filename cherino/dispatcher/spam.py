@@ -9,7 +9,7 @@ router = Router()
 
 
 def allow_nonauth_media(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.ALLOW_NOAUTH_MEDIA) == "yes"
+    return get_setting(message.chat.id, Settings.ALLOW_NOAUTH_MEDIA)
 
 
 @router.message(IsGroup(), ~IsMember(), HasMedia(), ~F.func(allow_nonauth_media))

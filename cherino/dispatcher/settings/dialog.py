@@ -1,98 +1,29 @@
-from aiogram import Router, Bot
+import operator
+
+from aiogram import Router
 from aiogram.filters.command import Command
-from aiogram.filters.state import State, StatesGroup
-from aiogram.types import Message, Chat, CallbackQuery
 from aiogram_dialog import (
     Window,
-    DialogManager,
     StartMode,
     Dialog,
-    ChatEvent,
-    DialogProtocol,
-    ShowMode,
 )
-from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
-    Button,
     Checkbox,
     Row,
-    ManagedCheckboxAdapter,
     Cancel,
+    SwitchTo,
+    ScrollingGroup, Select,
 )
-from aiogram_dialog.widgets.text import Const, Format
-from loguru import logger
+from aiogram_dialog.widgets.text import Const, Format, Jinja
 
-from cherino.crud.setting import set_setting, get_setting, Settings
+from cherino.dispatcher.settings.handler import *
+from cherino.dispatcher.settings.handler import setting_getter, question_getter
+from cherino.dispatcher.settings.state import SettingsSG
 from cherino.filters import AdminFilter
 
 router = Router()
 router.message.filter(AdminFilter())
 router.callback_query.filter(AdminFilter())
-
-
-class SettingsSG(StatesGroup):
-    main = State()
-    edit_ban_time = State()
-
-
-async def on_state_changed(
-    event: CallbackQuery, checkbox: ManagedCheckboxAdapter, manager: DialogManager
-):
-    key = Settings(checkbox.widget.widget_id)
-    value = {
-        Settings.ALLOW_JOIN: ["no", "yes"],
-        Settings.AUTH_TYPE: ["私聊", "群内"],
-        Settings.ALLOW_NOAUTH_MEDIA: ["no", "yes"],
-    }[key][int(checkbox.is_checked())]
-    logger.info("set {} = {}", key, value)
-    set_setting(event.message.chat.id, key, value)
-
-
-async def get_data(event_chat: Chat, **kwargs) -> dict:
-    return {Settings.BAN_TIME: get_setting(event_chat.id, Settings.BAN_TIME)}
-
-
-async def input_ban_time_handler(
-    message: Message, message_input: MessageInput, manager: DialogManager
-):
-    ban_time = message.text
-    logger.info("set ban_time = {}", ban_time)
-    set_setting(message.chat.id, Settings.BAN_TIME, ban_time)
-    manager.show_mode = ShowMode.EDIT
-    await message.delete()
-    await manager.switch_to(SettingsSG.main)
-
-
-async def on_click_ban_time(
-    callback_query: CallbackQuery, button: Button, manager: DialogManager
-):
-    await manager.switch_to(SettingsSG.edit_ban_time)
-
-
-async def on_click_backward(
-    callback_query: CallbackQuery, button: Button, manager: DialogManager
-):
-    await manager.switch_to(SettingsSG.main)
-
-
-async def on_click_cancel(
-    callback_query: CallbackQuery, button: Button, manager: DialogManager
-):
-    await callback_query.message.delete()
-
-
-async def on_dialog_start(data, manager: DialogManager):
-    for key in Settings.__members__.values():
-        checkbox = manager.find(key)
-        checkbox.widget.set_widget_data(
-            manager, get_setting(manager.event.chat.id, key) == "yes"
-        )
-
-    checkbox: ManagedCheckboxAdapter = manager.find(Settings.ALLOW_JOIN)
-    checkbox.widget.set_widget_data(
-        manager, get_setting(manager.event.chat.id, Settings.ALLOW_JOIN) == "yes"
-    )
-
 
 dialog = Dialog(
     Window(
@@ -105,9 +36,9 @@ dialog = Dialog(
                 on_state_changed=on_state_changed,
             ),
             Checkbox(
-                Const("验证方式 - 群内"),
-                Const("验证方式 - 私聊"),
-                id=Settings.AUTH_TYPE,
+                Const("群内验证 - 是"),
+                Const("群内验证 - 否"),
+                id=Settings.AUTH_IN_GROUP,
                 on_state_changed=on_state_changed,
             ),
         ),
@@ -125,18 +56,11 @@ dialog = Dialog(
             ),
         ),
         Row(
-            Button(
-                Const("添加问题"),
-                id="add_question",
+            SwitchTo(Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION),
+            SwitchTo(
+                Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION
             ),
-            Button(
-                Const("删除问题"),
-                id="delete_question",
-            ),
-            Button(
-                Const("修改问题"),
-                id="edit_question",
-            ),
+            SwitchTo(Const("修改问题"), id="edit_question", state=SettingsSG.EDIT_QUESTION),
         ),
         Row(
             Button(
@@ -148,22 +72,50 @@ dialog = Dialog(
                 id="delete_question_group",
             ),
         ),
+        SwitchTo(Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS),
         Cancel(
             Const("完成"),
             on_click=on_click_cancel,
         ),
-        state=SettingsSG.main,
-        getter=get_data,
+        state=SettingsSG.MAIN,
+        getter=setting_getter,
     ),
     Window(
         Const("请回复新的封禁时长，如 1h、1d。超过 366d 或小于 30s 会视为永久封禁"),
-        Button(
-            Const("返回"),
-            id="backward",
-            on_click=on_click_backward,
-        ),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
         MessageInput(input_ban_time_handler),
-        state=SettingsSG.edit_ban_time,
+        state=SettingsSG.EDIT_BAN_TIME,
+    ),
+    Window(
+        Const("请回复需要添加的问题，格式如下：\n问题描述\n正确答案\n错误答案1\n错误答案2"),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        MessageInput(input_add_question),
+        state=SettingsSG.ADD_QUESTION,
+    ),
+    Window(
+        Const("请点击需要删除的问题"),
+        ScrollingGroup(
+            Select(
+                Format("{item.description} - {item.correct_answer.description}"),
+                id="s_questions",
+                item_id_getter=operator.attrgetter("id"),
+                items="questions",
+                on_click=on_select_delete_question,
+            ),
+            id="select_question_to_delete",
+            width=1,
+            height=20,
+        ),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        getter=question_getter,
+        state=SettingsSG.DEL_QUESTION,
+    ),
+    Window(
+        Const("以下是当前群组的题库回答记录"),
+        Jinja("<pre>{{answer_stats}}</pre>"),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        getter=answer_stats_getter,
+        state=SettingsSG.ANSWER_STATS,
     ),
     on_start=on_dialog_start,
 )
@@ -171,6 +123,7 @@ dialog = Dialog(
 router.include_router(dialog)
 
 
-@router.message(Command("new_settings"), AdminFilter())
+@router.message(Command("settings"), AdminFilter())
 async def cmd_settings(message: Message, dialog_manager: DialogManager):
-    await dialog_manager.start(SettingsSG.main, mode=StartMode.RESET_STACK)
+    await message.delete()
+    await dialog_manager.start(SettingsSG.MAIN, mode=StartMode.RESET_STACK)

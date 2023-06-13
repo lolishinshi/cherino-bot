@@ -32,11 +32,11 @@ router = Router()
 
 
 def can_join(event: ChatMemberUpdated) -> bool:
-    return get_setting(event.chat.id, Settings.ALLOW_JOIN) == "yes"
+    return get_setting(event.chat.id, Settings.ALLOW_JOIN)
 
 
 def auth_in_group(event: ChatMemberUpdated) -> bool:
-    return get_setting(event.chat.id, Settings.AUTH_TYPE) == "群内"
+    return get_setting(event.chat.id, Settings.AUTH_IN_GROUP)
 
 
 def ban_time(chat_id: int) -> tuple[str, int]:
@@ -248,9 +248,10 @@ async def on_message_new_chat_members(message: Message, scheduler: Scheduler):
     users = [user for user in message.new_chat_members if not user.is_bot]
     # 超时后删除入群信息
     # NOTE: 多位用户入群时此处只考虑第一位用户的认证状态
-    scheduler.run_after(
-        message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
-    )
+    if users:
+        scheduler.run_after(
+            message.delete(), 60, job_id=f"auth:delete-join:{chat.id}:{users[0].id}"
+        )
 
 
 @router.chat_member(

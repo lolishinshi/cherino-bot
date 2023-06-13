@@ -7,14 +7,14 @@ from cherino.database.models import Setting
 
 class Settings(StrEnum):
     ALLOW_JOIN = "allow_join"
-    AUTH_TYPE = "auth_type"
+    AUTH_IN_GROUP = "auth_in_group"
     BAN_TIME = "ban_time"
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
 
 
 DEFAULT_VALUE = {
     Settings.ALLOW_JOIN: True,
-    Settings.AUTH_TYPE: "群内",
+    Settings.AUTH_IN_GROUP: True,
     Settings.BAN_TIME: "1h",
     Settings.ALLOW_NOAUTH_MEDIA: False,
 }

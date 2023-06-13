@@ -37,7 +37,7 @@ def get_all_questions(chat_id: int) -> list[Question]:
     """
     获取所有入群问题
     """
-    return list(Question.select().where(GroupQuestion.group == chat_id))
+    return list(Question.select().where(Question.group == chat_id))
 
 
 def get_question_group(chat_id: int) -> list[GroupQuestion]:
