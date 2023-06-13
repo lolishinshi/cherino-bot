@@ -1,9 +1,8 @@
 from aiogram import Router
 
-from . import question, dialog
+from . import dialog
 
 router = Router()
 router.include_routers(
-    question.router,
     dialog.router,
 )

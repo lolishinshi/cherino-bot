@@ -12,12 +12,17 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     Cancel,
     SwitchTo,
-    ScrollingGroup, Select,
+    ScrollingGroup,
+    Select,
 )
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
 from cherino.dispatcher.settings.handler import *
-from cherino.dispatcher.settings.handler import setting_getter, question_getter
+from cherino.dispatcher.settings.getter import (
+    setting_getter,
+    question_getter,
+    answer_stats_getter,
+)
 from cherino.dispatcher.settings.state import SettingsSG
 from cherino.filters import AdminFilter
 
@@ -123,7 +128,7 @@ dialog = Dialog(
 router.include_router(dialog)
 
 
-@router.message(Command("settings"), AdminFilter())
+@router.message(Command("settings"))
 async def cmd_settings(message: Message, dialog_manager: DialogManager):
     await message.delete()
     await dialog_manager.start(SettingsSG.MAIN, mode=StartMode.RESET_STACK)
