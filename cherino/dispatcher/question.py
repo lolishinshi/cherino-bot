@@ -2,14 +2,14 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from cherino.filters import IsAdmin, IsGroup
+from cherino.filters import AdminFilter, IsGroup
 from cherino.scheduler import Scheduler
 from cherino.utils.message import add_question_from_message
 
 router = Router()
 
 
-@router.message(Command("add_question"), IsGroup(), IsAdmin())
+@router.message(Command("add_question"), IsGroup(), AdminFilter())
 async def cmd_add_question(message: Message, scheduler: Scheduler):
     if not message.reply_to_message:
         return

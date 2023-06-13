@@ -21,7 +21,7 @@ class MemberJoin(Filter):
         return len(users) != 0
 
 
-class IsAdmin(Filter):
+class AdminFilter(Filter):
     """
     判断消息来源是否是管理员
     """

@@ -5,7 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
 from cherino import crud
-from cherino.filters import IsAdmin
+from cherino.filters import AdminFilter
 from cherino.scheduler import Scheduler
 from cherino.utils.message import add_question_from_message
 from cherino.utils.pager import AbstractPager, PagerCallback
@@ -15,7 +15,9 @@ from .settings import SettingsCallback, SettingState
 router = Router()
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "add_question"), IsAdmin())
+@router.callback_query(
+    SettingsCallback.filter(F.action == "add_question"), AdminFilter()
+)
 async def setting_add_question(callback: CallbackQuery, state: FSMContext):
     """
     添加入群问题
@@ -30,7 +32,7 @@ async def setting_add_question(callback: CallbackQuery, state: FSMContext):
     await state.update_data()
 
 
-@router.message(SettingState.add_question, IsAdmin())
+@router.message(SettingState.add_question, AdminFilter())
 async def process_add_question(message: Message, scheduler: Scheduler, bot: Bot):
     """
     记录回复的入群问题
@@ -49,9 +51,9 @@ async def process_add_question(message: Message, scheduler: Scheduler, bot: Bot)
 
 
 @router.callback_query(
-    SettingsCallback.filter(F.action == "delete_question"), IsAdmin()
+    SettingsCallback.filter(F.action == "delete_question"), AdminFilter()
 )
-@router.callback_query(PagerCallback.filter(F.name == "delete_question"), IsAdmin())
+@router.callback_query(PagerCallback.filter(F.name == "delete_question"), AdminFilter())
 class DeleteQuestionPager(AbstractPager):
     @property
     def text(self) -> str:
@@ -80,7 +82,7 @@ class DeleteQuestionPager(AbstractPager):
 
 
 @router.callback_query(
-    SettingsCallback.filter(F.action == "delete_question_group"), IsAdmin()
+    SettingsCallback.filter(F.action == "delete_question_group"), AdminFilter()
 )
 async def setting_delete_question_group(
     callback: CallbackQuery, bot: Bot, callback_data: SettingsCallback
@@ -115,7 +117,7 @@ async def setting_delete_question_group(
 
 
 @router.callback_query(
-    SettingsCallback.filter(F.action == "answer_statistics"), IsAdmin()
+    SettingsCallback.filter(F.action == "answer_statistics"), AdminFilter()
 )
 async def setting_answer_statistics(query: CallbackQuery):
     """

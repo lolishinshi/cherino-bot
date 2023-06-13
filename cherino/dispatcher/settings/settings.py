@@ -10,7 +10,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
 from cherino.crud.setting import get_setting, set_setting, Settings
-from cherino.filters import IsAdmin
+from cherino.filters import AdminFilter
 from cherino.scheduler import Scheduler
 
 router = Router()
@@ -72,7 +72,7 @@ async def open_settings(callback: CallbackQuery):
     await callback.message.edit_text("同志，欢迎来到设置页面", reply_markup=keyboard)
 
 
-@router.message(Command("settings"), IsAdmin())
+@router.message(Command("settings"), AdminFilter())
 async def settings(message: Message):
     """
     打开全局设置
@@ -82,7 +82,7 @@ async def settings(message: Message):
     await message.reply("同志，欢迎来到设置页面", reply_markup=keyboard)
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "finish"), IsAdmin())
+@router.callback_query(SettingsCallback.filter(F.action == "finish"), AdminFilter())
 async def finish(callback: CallbackQuery, state: FSMContext):
     """
     完成设置
@@ -92,7 +92,7 @@ async def finish(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "backward"), IsAdmin())
+@router.callback_query(SettingsCallback.filter(F.action == "backward"), AdminFilter())
 async def backward(callback: CallbackQuery, state: FSMContext):
     """
     返回设置页面
@@ -101,7 +101,7 @@ async def backward(callback: CallbackQuery, state: FSMContext):
     await open_settings(callback)
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "allow_join"), IsAdmin())
+@router.callback_query(SettingsCallback.filter(F.action == "allow_join"), AdminFilter())
 async def callback_allow_join(callback: CallbackQuery):
     """
     更改是否允许加入
@@ -112,7 +112,7 @@ async def callback_allow_join(callback: CallbackQuery):
     await open_settings(callback)
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "auth_type"), IsAdmin())
+@router.callback_query(SettingsCallback.filter(F.action == "auth_type"), AdminFilter())
 async def callback_auth_type(callback: CallbackQuery):
     """
     更改验证方式
@@ -124,7 +124,7 @@ async def callback_auth_type(callback: CallbackQuery):
 
 
 @router.callback_query(
-    SettingsCallback.filter(F.action == "allow_nonauth_media"), IsAdmin()
+    SettingsCallback.filter(F.action == "allow_nonauth_media"), AdminFilter()
 )
 async def callback_allow_nonauth_media(callback: CallbackQuery):
     """
@@ -136,7 +136,7 @@ async def callback_allow_nonauth_media(callback: CallbackQuery):
     await open_settings(callback)
 
 
-@router.callback_query(SettingsCallback.filter(F.action == "ban_time"), IsAdmin())
+@router.callback_query(SettingsCallback.filter(F.action == "ban_time"), AdminFilter())
 async def callback_ban_time(callback: CallbackQuery, state: FSMContext):
     """
     更改封禁时长
@@ -151,7 +151,7 @@ async def callback_ban_time(callback: CallbackQuery, state: FSMContext):
     await state.update_data()
 
 
-@router.message(SettingState.edit_ban_time, IsAdmin())
+@router.message(SettingState.edit_ban_time, AdminFilter())
 async def process_edit_ban_time(message: Message, scheduler: Scheduler):
     """
     修改封禁时长

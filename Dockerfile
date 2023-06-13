@@ -1,19 +1,22 @@
-FROM python:3.10 AS builder
+FROM python:3.11 AS builder
 
 RUN pip install -U pip setuptools wheel
 RUN pip install pdm
-
-COPY pyproject.toml pdm.lock /app/
-COPY cherino /app/cherino
+RUN mkdir -p /app/__pypackages__
 
 WORKDIR /app
-RUN mkdir __pypackages__ && pdm sync --prod --no-editable
 
-FROM python:3.10
+COPY pyproject.toml pdm.lock /app/
+RUN pdm sync --prod --no-editable
+
+COPY cherino /app/cherino
+RUN pdm sync --prod --no-editable
+
+FROM python:3.11
 
 WORKDIR /app
 
 ENV PYTHONPATH=/app/pkgs
-COPY --from=builder /app/__pypackages__/3.10/lib /app/pkgs
+COPY --from=builder /app/__pypackages__/3.11/lib /app/pkgs
 
 CMD ["python", "-m", "cherino"]

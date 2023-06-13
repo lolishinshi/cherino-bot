@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
 from cherino import crud
-from cherino.filters import IsAdmin, IsGroup
+from cherino.filters import AdminFilter, IsGroup
 from cherino.scheduler import Scheduler
 from cherino.utils.user import get_admin, get_admin_mention
 
@@ -19,7 +19,7 @@ class ReportCallback(CallbackData, prefix="report"):
     action: str
 
 
-@router.message(Command("ban"), IsGroup(), IsAdmin())
+@router.message(Command("ban"), IsGroup(), AdminFilter())
 async def cmd_ban(message: Message, bot: Bot, command: CommandObject):
     """
     封禁用户，并删除该用户所有消息
@@ -41,7 +41,7 @@ async def cmd_ban(message: Message, bot: Bot, command: CommandObject):
         await message.delete()
 
 
-@router.message(Command("warn"), IsGroup(), IsAdmin())
+@router.message(Command("warn"), IsGroup(), AdminFilter())
 async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
     """
     警告用户，当警告次数达到上限时，自动封禁用户
@@ -115,7 +115,9 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
         await message.delete()
 
 
-@router.callback_query(ReportCallback.filter(F.action == "ban"), IsGroup(), IsAdmin())
+@router.callback_query(
+    ReportCallback.filter(F.action == "ban"), IsGroup(), AdminFilter()
+)
 async def callback_report_ban(
     query: CallbackQuery, callback_data: ReportCallback, scheduler: Scheduler
 ):
@@ -136,7 +138,9 @@ async def callback_report_ban(
         logger.warning("处理举报回调失败：{}", e)
 
 
-@router.callback_query(ReportCallback.filter(F.action == "warn"), IsGroup(), IsAdmin())
+@router.callback_query(
+    ReportCallback.filter(F.action == "warn"), IsGroup(), AdminFilter()
+)
 async def callback_report_warn(
     query: CallbackQuery, callback_data: ReportCallback, scheduler: Scheduler
 ):
@@ -166,7 +170,7 @@ async def callback_report_warn(
 
 
 @router.callback_query(
-    ReportCallback.filter(F.action == "cancel"), IsGroup(), IsAdmin()
+    ReportCallback.filter(F.action == "cancel"), IsGroup(), AdminFilter()
 )
 async def callback_report_cancel(query: CallbackQuery):
     """
