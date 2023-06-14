@@ -74,6 +74,8 @@ class Scheduler:
         if isinstance(func, TelegramMethod):
             kwargs["jobstore"] = "sqlite"
             func = TelegramMethodWrapper(func).call
+        if not kwargs.get("name"):
+            kwargs["name"] = job_id
         self.scheduler.add_job(
             func,
             "date",
