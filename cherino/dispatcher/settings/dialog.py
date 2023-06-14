@@ -24,15 +24,15 @@ from cherino.dispatcher.settings.getter import (
     answer_stats_getter,
 )
 from cherino.dispatcher.settings.state import SettingsSG
-from cherino.filters import AdminFilter
+from cherino.filters import AdminFilter, IsGroup
 
 router = Router()
-router.message.filter(AdminFilter())
-router.callback_query.filter(AdminFilter())
+router.message.filter(IsGroup(), AdminFilter())
+router.callback_query.filter(IsGroup(), AdminFilter())
 
 dialog = Dialog(
     Window(
-        Const("同志，欢迎来到设置页面"),
+        Const("同志，欢迎来到设置页面\n设置过程中请不要输入其他命令或消息，否则视为退出设置模式"),
         Row(
             Checkbox(
                 Const("允许加入 - 是"),
@@ -78,10 +78,8 @@ dialog = Dialog(
             ),
         ),
         SwitchTo(Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS),
-        Cancel(
-            Const("完成"),
-            on_click=on_click_cancel,
-        ),
+        Cancel(Const("完成"), on_click=on_click_cancel),
+        MessageInput(input_nothing_handler),
         state=SettingsSG.MAIN,
         getter=setting_getter,
     ),
@@ -112,6 +110,7 @@ dialog = Dialog(
             height=20,
         ),
         SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        MessageInput(input_nothing_handler),
         getter=question_getter,
         state=SettingsSG.DEL_QUESTION,
     ),
@@ -119,6 +118,7 @@ dialog = Dialog(
         Const("以下是当前群组的题库回答记录"),
         Jinja("<pre>{{answer_stats}}</pre>"),
         SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        MessageInput(input_nothing_handler),
         getter=answer_stats_getter,
         state=SettingsSG.ANSWER_STATS,
     ),
@@ -131,4 +131,6 @@ router.include_router(dialog)
 @router.message(Command("settings"))
 async def cmd_settings(message: Message, dialog_manager: DialogManager):
     await message.delete()
-    await dialog_manager.start(SettingsSG.MAIN, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(
+        SettingsSG.MAIN, mode=StartMode.RESET_STACK, show_mode=ShowMode.EDIT
+    )

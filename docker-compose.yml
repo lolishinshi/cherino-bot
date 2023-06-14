@@ -3,7 +3,7 @@ version: "3.3"
 services:
   cherino:
     build: .
-    container_name: cherino-test
+    container_name: cherino
     restart: unless-stopped
     volumes:
       - ./config.toml:/app/config.toml

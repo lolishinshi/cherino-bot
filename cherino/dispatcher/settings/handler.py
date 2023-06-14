@@ -50,6 +50,12 @@ async def input_add_question(
     scheduler.run_after(reply.delete(), 5, str(reply.message_id))
 
 
+async def input_nothing_handler(
+    message: Message, message_input: MessageInput, manager: DialogManager
+):
+    await manager.done()
+
+
 async def on_click_ban_time(
     callback_query: CallbackQuery, button: Button, manager: DialogManager
 ):
