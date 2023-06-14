@@ -21,9 +21,14 @@ class SqliteJobStore(BaseJobStore):
 
     def _get_jobs(self, *conditions):
         jobs = []
-        job_stores = (
-            JobStore.select().where(*conditions).order_by(JobStore.next_run_time)
-        )
+        if not conditions:
+            job_stores = (
+                JobStore.select().order_by(JobStore.next_run_time)
+            )
+        else:
+            job_stores = (
+                JobStore.select().where(*conditions).order_by(JobStore.next_run_time)
+            )
         failed_job_ids = set()
 
         for row in job_stores:
@@ -40,7 +45,7 @@ class SqliteJobStore(BaseJobStore):
         return jobs
 
     def lookup_job(self, job_id):
-        if job_store := JobStore.get_or_none(JobStore.id == job_id).execute():
+        if job_store := JobStore.get_or_none(JobStore.id == job_id):
             return self._reconstitute_job(job_store)
 
     def get_due_jobs(self, now):

@@ -46,6 +46,12 @@ dialog = Dialog(
                 id=Settings.AUTH_IN_GROUP,
                 on_state_changed=on_state_changed,
             ),
+            Checkbox(
+                Const("大清洗模式 - 是"),
+                Const("大清洗模式 - 否"),
+                id=Settings.GREAT_PURGE,
+                on_state_changed=on_state_changed,
+            ),
         ),
         Row(
             Button(

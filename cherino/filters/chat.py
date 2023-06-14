@@ -58,6 +58,8 @@ class IsMember(Filter):
             SpecialUserID.SERVICE_CHAT,
         ]:
             return True
+        if message.from_user.is_bot:
+            return True
         member = await bot.get_chat_member(message.chat.id, message.from_user.id)
         if member.status == ChatMemberStatus.LEFT:
             return False

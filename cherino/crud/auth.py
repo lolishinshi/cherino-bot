@@ -157,3 +157,31 @@ def get_answer_stats(chat_id: int) -> list[tuple[Question, int, int]]:
     return [
         (Question.get_by_id(q), total, correct) for q, total, correct in query.tuples()
     ]
+
+
+def get_user_answer_stats(chat_id: int, user_id: int) -> tuple[int, int]:
+    """
+    查询某个用户的回答记录，返回 [回答总数、正确回答数]
+    """
+    query = (
+        AnswerHistory.select(
+            fn.COUNT(AnswerHistory.question),
+            fn.SUM(
+                Case(
+                    None,
+                    ((AnswerHistory.answer == Question.correct_answer, 1),),
+                    0,
+                )
+            ),
+        )
+        .join(Question, on=(AnswerHistory.question == Question.id))
+        .where(
+            AnswerHistory.group.is_null() | (AnswerHistory.group == chat_id),
+            AnswerHistory.user == user_id,
+        )
+        .get_or_none()
+    )
+    if not query:
+        return 0, 0
+    else:
+        return query[0], query[1]

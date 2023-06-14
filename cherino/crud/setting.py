@@ -10,6 +10,7 @@ class Settings(StrEnum):
     AUTH_IN_GROUP = "auth_in_group"
     BAN_TIME = "ban_time"
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
+    GREAT_PURGE = "great_purge"
 
 
 DEFAULT_VALUE = {
@@ -17,6 +18,7 @@ DEFAULT_VALUE = {
     Settings.AUTH_IN_GROUP: True,
     Settings.BAN_TIME: "1h",
     Settings.ALLOW_NOAUTH_MEDIA: False,
+    Settings.GREAT_PURGE: False,
 }
 
 
