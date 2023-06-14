@@ -210,7 +210,10 @@ async def callback_auth_private(
         pending_verify.delete_instance()
 
         success = auth.add_answer(
-            query.from_user.id, callback_data.question, callback_data.answer
+            query.from_user.id,
+            callback_data.group,
+            callback_data.question,
+            callback_data.answer,
         )
         if not success:
             timestr, timeseconds = ban_time(callback_data.group)
@@ -328,7 +331,10 @@ async def callback_auth_group(
             return
 
         success = auth.add_answer(
-            query.from_user.id, callback_data.question, callback_data.answer
+            query.from_user.id,
+            query.message.chat.id,
+            callback_data.question,
+            callback_data.answer,
         )
         if not success:
             timestr, timeseconds = ban_time(query.message.chat.id)

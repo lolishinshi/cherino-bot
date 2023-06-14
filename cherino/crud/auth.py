@@ -90,11 +90,11 @@ def get_question(chat_id: int) -> Optional[tuple[Question, Answer]]:
     return question, answers
 
 
-def add_answer(user_id: int, question: int, answer: int) -> bool:
+def add_answer(user_id: int, chat_id: int, question: int, answer: int) -> bool:
     """
     记录并检查回答是否正确
     """
-    AnswerHistory.create(user=user_id, question=question, answer=answer)
+    AnswerHistory.create(user=user_id, group=chat_id, question=question, answer=answer)
     return (
         Question.select()
         .where(Question.id == question, Question.correct_answer == answer)

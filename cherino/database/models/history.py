@@ -41,6 +41,8 @@ class AnswerHistory(Model):
     id = AutoField()
     # 用户的 Telegram ID
     user = BigIntegerField(index=True)
+    # 群组 ID
+    group = BigIntegerField(index=True, null=True)
     # 问题 ID
     question = ForeignKeyField(Question, backref="history", index=True)
     # 答案 ID
