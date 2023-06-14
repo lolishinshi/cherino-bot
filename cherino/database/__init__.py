@@ -12,6 +12,7 @@ from .models import (
     Question,
     Setting,
     GroupQuestion,
+    State,
 )
 
 
@@ -25,6 +26,7 @@ def init(db_: Database):
             PendingVerify,
             Setting,
             GroupQuestion,
+            State,
         ]
     )
     Router(db_, migrate_dir=Path(__file__).parent / "migrations").run()
