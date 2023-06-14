@@ -101,7 +101,5 @@ async def on_click_confirm_purge(
     async for user in get_chat_members(c.message.chat.id):
         _, correct = auth.get_user_answer_stats(c.message.chat.id, user.id)
         if correct == 0:
-            await bot.ban_chat_member(
-                c.message.chat.id, user.id, timedelta(minutes=1)
-            )
+            await bot.ban_chat_member(c.message.chat.id, user.id, timedelta(minutes=1))
             logger.info("清理用户：{} {}", c.message.chat.id, user.id)

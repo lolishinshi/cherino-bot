@@ -122,8 +122,7 @@ dialog = Dialog(
         state=SettingsSG.ANSWER_STATS,
     ),
     Window(
-        Const("以下是需要被清洗的人员名单\n一分钟后可以重新加入"),
-        Jinja("<pre>{{ purge_list }}</pre>"),
+        Jinja("共扫描 {{count}} 人，以下是需要被清洗的人员名单，一分钟后可以重新加入\n<pre>{{ purge_list }}</pre>"),
         Row(
             Button(Const("确认清洗"), id="confirm_purge", on_click=on_click_confirm_purge),
             SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),

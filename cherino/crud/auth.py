@@ -178,7 +178,8 @@ def get_user_answer_stats(chat_id: int, user_id: int) -> tuple[int, int]:
         .where(
             # FIXME: is_null 获取不到
             # AnswerHistory.group.is_null() | (AnswerHistory.group == chat_id),
-            AnswerHistory.user == user_id,
+            AnswerHistory.user
+            == user_id,
         )
         .tuples()
     )

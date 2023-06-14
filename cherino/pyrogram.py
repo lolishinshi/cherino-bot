@@ -11,7 +11,9 @@ async def get_chat_members(chat_id: int) -> Generator[User, None, None]:
         return
 
     name = CONFIG.token.split(":")[0]
-    async with Client(name, CONFIG.api_id, CONFIG.api_hash, bot_token=CONFIG.token) as client:
+    async with Client(
+        name, CONFIG.api_id, CONFIG.api_hash, bot_token=CONFIG.token
+    ) as client:
         async for member in client.get_chat_members(chat_id):
             member: ChatMember = member
             if member.user.is_bot:
