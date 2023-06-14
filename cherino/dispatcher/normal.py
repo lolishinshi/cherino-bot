@@ -4,13 +4,17 @@ from aiogram.types import ContentType, Message, ReplyKeyboardRemove
 
 from cherino import utils
 from cherino.filters import IsGroup
+from cherino.scheduler import Scheduler
 
 router = Router()
 
 
 @router.message(Command("ping"))
-async def cmd_ping(message: Message):
-    await message.reply("pong", reply_markup=ReplyKeyboardRemove())
+async def cmd_ping(message: Message, scheduler: Scheduler):
+    chat = message.chat
+    reply = await message.reply("pong", reply_markup=ReplyKeyboardRemove())
+    scheduler.run_after(message.delete(), 5, f"delete:{chat.id}:{message.message_id}")
+    scheduler.run_after(reply.delete(), 5, f"delete:{chat.id}:{reply.message_id}")
 
 
 @router.message(Command("admin"), IsGroup())

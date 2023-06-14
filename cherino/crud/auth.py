@@ -55,7 +55,7 @@ def delete_question_group(chat_id: int, question_id: int) -> list[GroupQuestion]
         return
     GroupQuestion.delete().where(
         GroupQuestion.group == chat_id, GroupQuestion.id == question_id
-    )
+    ).execute()
 
 
 def delete_question(chat_id: int, question_id: int):

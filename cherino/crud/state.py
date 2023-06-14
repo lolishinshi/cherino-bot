@@ -16,7 +16,9 @@ class SqliteStorage(BaseStorage):
         self, bot: Bot, key: StorageKey, state: StateType = None
     ) -> None:
         key = build_key(key, "state")
-        State.insert(key=key, value=state.state if isinstance(state, State) else state).on_conflict_replace().execute()
+        State.insert(
+            key=key, value=state.state if isinstance(state, State) else state
+        ).on_conflict_replace().execute()
 
     async def get_state(self, bot: Bot, key: StorageKey) -> Optional[str]:
         key = build_key(key, "state")

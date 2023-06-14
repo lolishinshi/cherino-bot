@@ -1,6 +1,6 @@
 [project]
 name = "cherino"
-version = "0.3.0"
+version = "0.3.1"
 description = "Telegram 群组管理 bot"
 authors = [
     {name = "Aloxaf", email = "Aloxafx@gmail.com"},
