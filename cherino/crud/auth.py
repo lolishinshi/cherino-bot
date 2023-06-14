@@ -176,12 +176,12 @@ def get_user_answer_stats(chat_id: int, user_id: int) -> tuple[int, int]:
         )
         .join(Question, on=(AnswerHistory.question == Question.id))
         .where(
-            AnswerHistory.group.is_null() | (AnswerHistory.group == chat_id),
+            # FIXME: is_null 获取不到
+            # AnswerHistory.group.is_null() | (AnswerHistory.group == chat_id),
             AnswerHistory.user == user_id,
         )
-        .get_or_none()
+        .tuples()
     )
-    if not query:
-        return 0, 0
-    else:
-        return query[0], query[1]
+    for total, correct in query:
+        return total, correct
+    return 0, 0

@@ -17,6 +17,7 @@ dependencies = [
     "peewee-migrate>=1.10.1",
     "pytimeparse>=1.1.8",
     "aiogram-dialog==2.0.0b18",
+    "pyrogram>=2.0.106",
 ]
 requires-python = ">=3.10"
 license = {text = "MIT"}

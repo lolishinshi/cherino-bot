@@ -29,7 +29,7 @@ db_url = "sqlite:///db.sqlite"
 2. 创建数据库
 
 ```
-touch db.sqlite
+touch db.sqlite db.sqlite-shm db.sqlite-wal
 ```
 
 3. 使用 docker-compose 直接构建并启动

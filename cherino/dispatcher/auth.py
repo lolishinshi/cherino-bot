@@ -366,27 +366,3 @@ async def callback_auth_group(
         scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
     except Exception as e:
         logger.exception("入群验证回调失败: {}", e)
-
-
-@router.message(F.func(great_purge), ~AdminFilter(), IsMember())
-async def on_great_purge(message: Message, bot: Bot):
-    """
-    大清洗
-    """
-    chat = message.chat
-    user = message.from_user
-
-    total, correct = auth.get_user_answer_stats(chat.id, user.id)
-    if correct > 0:
-        return
-
-    if not auth.get_question(chat.id):
-        return
-
-    await message.delete()
-    await restrict_user(chat.id, user.id, True, bot)
-
-    question, answer_markup = get_question(chat.id, user.id)
-    text = "{} 同志，我们接到举报称你是萝莉反动分子\n请在 60s 内回答下列问题以洗刷自己的嫌疑\n{}".format(
-        user.mention_html(), question.description
-    )

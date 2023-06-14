@@ -10,7 +10,7 @@ class Settings(StrEnum):
     AUTH_IN_GROUP = "auth_in_group"
     BAN_TIME = "ban_time"
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
-    GREAT_PURGE = "great_purge"
+    GREAT_PURGE = "great_purge"  # 废弃
 
 
 DEFAULT_VALUE = {

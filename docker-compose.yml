@@ -8,3 +8,5 @@ services:
     volumes:
       - ./config.toml:/app/config.toml
       - ./db.sqlite:/app/db.sqlite
+      - ./db.sqlite-shm:/app/db.sqlite-shm
+      - ./db.sqlite-wal:/app/db.sqlite-wal

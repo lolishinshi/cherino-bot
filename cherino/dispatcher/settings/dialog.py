@@ -18,11 +18,7 @@ from aiogram_dialog.widgets.kbd import (
 from aiogram_dialog.widgets.text import Const, Format, Jinja
 
 from cherino.dispatcher.settings.handler import *
-from cherino.dispatcher.settings.getter import (
-    setting_getter,
-    question_getter,
-    answer_stats_getter,
-)
+from cherino.dispatcher.settings.getter import *
 from cherino.dispatcher.settings.state import SettingsSG
 from cherino.filters import AdminFilter, IsGroup
 
@@ -44,12 +40,6 @@ dialog = Dialog(
                 Const("群内验证 - 是"),
                 Const("群内验证 - 否"),
                 id=Settings.AUTH_IN_GROUP,
-                on_state_changed=on_state_changed,
-            ),
-            Checkbox(
-                Const("大清洗模式 - 是"),
-                Const("大清洗模式 - 否"),
-                id=Settings.GREAT_PURGE,
                 on_state_changed=on_state_changed,
             ),
         ),
@@ -83,7 +73,10 @@ dialog = Dialog(
                 id="delete_question_group",
             ),
         ),
-        SwitchTo(Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS),
+        Row(
+            SwitchTo(Const("大清洗"), id="great_purge", state=SettingsSG.GREAT_PURGE),
+            SwitchTo(Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS),
+        ),
         Cancel(Const("完成"), on_click=on_click_cancel),
         MessageInput(input_nothing_handler),
         state=SettingsSG.MAIN,
@@ -127,6 +120,17 @@ dialog = Dialog(
         MessageInput(input_nothing_handler),
         getter=answer_stats_getter,
         state=SettingsSG.ANSWER_STATS,
+    ),
+    Window(
+        Const("以下是需要被清洗的人员名单\n一分钟后可以重新加入"),
+        Jinja("<pre>{{ purge_list }}</pre>"),
+        Row(
+            Button(Const("确认清洗"), id="confirm_purge", on_click=on_click_confirm_purge),
+            SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        ),
+        MessageInput(input_nothing_handler),
+        getter=purge_list_getter,
+        state=SettingsSG.GREAT_PURGE,
     ),
     on_start=on_dialog_start,
 )

@@ -10,4 +10,4 @@ class SettingsSG(StatesGroup):
     ADD_QUESTION_GROUP = State()
     DEL_QUESTION_GROUP = State()
     ANSWER_STATS = State()
-    GREATE_PURGE = State()
+    GREAT_PURGE = State()

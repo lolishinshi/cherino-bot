@@ -22,9 +22,7 @@ class SqliteJobStore(BaseJobStore):
     def _get_jobs(self, *conditions):
         jobs = []
         if not conditions:
-            job_stores = (
-                JobStore.select().order_by(JobStore.next_run_time)
-            )
+            job_stores = JobStore.select().order_by(JobStore.next_run_time)
         else:
             job_stores = (
                 JobStore.select().where(*conditions).order_by(JobStore.next_run_time)

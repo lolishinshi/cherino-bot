@@ -149,5 +149,7 @@ config.toml
 .idea
 *.sqlite
 *.db
+db.*
 .pdm-python
 upload.sh
+pull.sh
