@@ -57,8 +57,8 @@ async def on_spam(message: Message, bot: Bot):
     builder.adjust(2)
 
     mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
-    text = "{}用户: {}\n举报人: {}\n理由: {}".format(
-        mention_admin, user.mention_html(), operator.id, reason
+    text = "{}用户: {}\n举报人: BOT\n理由: {}".format(
+        mention_admin, user.mention_html(str(user.id)), reason
     )
 
     await message.reply_to_message.reply(text, reply_markup=builder.as_markup())

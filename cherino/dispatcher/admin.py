@@ -108,7 +108,7 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
 
         mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
         text = "{}用户: {}\n举报人: {}\n理由: {}".format(
-            mention_admin, user.mention_html(), operator.id, reason
+            mention_admin, user.mention_html(str(user.id)), operator.id, reason
         )
 
         await message.reply_to_message.reply(text, reply_markup=builder.as_markup())
