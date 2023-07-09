@@ -11,3 +11,4 @@ class SettingsSG(StatesGroup):
     DEL_QUESTION_GROUP = State()
     ANSWER_STATS = State()
     GREAT_PURGE = State()
+    NOT_IMPLEMENTED = State()

@@ -58,20 +58,12 @@ dialog = Dialog(
         ),
         Row(
             SwitchTo(Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION),
-            SwitchTo(
-                Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION
-            ),
-            SwitchTo(Const("修改问题"), id="edit_question", state=SettingsSG.EDIT_QUESTION),
+            SwitchTo(Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION),
+            SwitchTo(Const("修改问题"), id="edit_question", state=SettingsSG.NOT_IMPLEMENTED),
         ),
         Row(
-            Button(
-                Const("链接题库"),
-                id="link_question_group",
-            ),
-            Button(
-                Const("删除题库"),
-                id="delete_question_group",
-            ),
+            SwitchTo(Const("链接题库"), id="link_question_group", state=SettingsSG.ADD_QUESTION_GROUP),
+            SwitchTo(Const("删除题库"), id="delete_question_group", state=SettingsSG.NOT_IMPLEMENTED),
         ),
         Row(
             SwitchTo(Const("大清洗"), id="great_purge", state=SettingsSG.GREAT_PURGE),
@@ -130,6 +122,18 @@ dialog = Dialog(
         MessageInput(input_nothing_handler),
         getter=purge_list_getter,
         state=SettingsSG.GREAT_PURGE,
+    ),
+    Window(
+        Const("请回复需要绑定的题库所属的群组 ID"),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        MessageInput(input_add_question_group),
+        state=SettingsSG.ADD_QUESTION_GROUP,
+    ),
+    Window(
+        Const("由于作者很懒，该功能尚未实现~"),
+        SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
+        MessageInput(input_nothing_handler),
+        state=SettingsSG.NOT_IMPLEMENTED,
     ),
     on_start=on_dialog_start,
 )

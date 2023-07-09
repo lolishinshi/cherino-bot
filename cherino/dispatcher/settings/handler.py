@@ -52,6 +52,19 @@ async def input_add_question(
     scheduler.run_after(reply.delete(), 5, str(reply.message_id))
 
 
+async def input_add_question_group(
+    message: Message, message_input: MessageInput, manager: DialogManager
+):
+    manager.show_mode = ShowMode.EDIT
+    group_id = int(message.text.strip())
+    auth.add_group_question(message.chat.id, group_id)
+
+    reply = await message.reply("已添加，你可以选择继续添加或者点击返回")
+    scheduler = manager.middleware_data["scheduler"]
+    scheduler.run_after(message.delete(), 5, str(message.message_id))
+    scheduler.run_after(reply.delete(), 5, str(reply.message_id))
+
+
 async def input_nothing_handler(
     message: Message, message_input: MessageInput, manager: DialogManager
 ):
