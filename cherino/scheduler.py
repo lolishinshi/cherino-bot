@@ -4,6 +4,7 @@ from random import randint
 from typing import Callable
 
 from aiogram.methods import TelegramMethod
+from apscheduler.job import Job
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -57,13 +58,8 @@ class Scheduler:
         """
         若干秒后执行命令，如果已经存在相同 job_id 的任务，则立即运行前一个任务
         """
-        for job in self.scheduler.get_jobs():
-            if job.id.startswith(f"{job_id}:_CNT_:"):
-                job.reschedule(None)
-                break
-        self.run_after(
-            func, seconds, f"{job_id}:_CNT_:{randint(0, 2**32)}", *args, **kwargs
-        )
+        self.trigger(job_id)
+        self.run_after(func, seconds, job_id, *args, **kwargs)
 
     def run_after(
         self, func: SchedulerFunc, seconds: int, job_id: str, *args, **kwargs
@@ -90,19 +86,21 @@ class Scheduler:
         """
         取消任务
         """
-        try:
-            self.scheduler.remove_job(job_id)
-        except JobLookupError:
-            pass
+        if job := self.find(job_id):
+            job.remove()
+
+    def find(self, job_id: str) -> Job:
+        """
+        查找任务
+        """
+        if job := self.scheduler.get_job(job_id):
+            return job
+        if job := self.scheduler.get_job(job_id, "sqlite"):
+            return job
 
     def trigger(self, job_id: str):
         """
         立即触发任务
         """
-        if job := self.scheduler.get_job(job_id):
+        if job := self.find(job_id):
             job.reschedule(None)
-        else:
-            for job in self.scheduler.get_jobs():
-                if job.id.startswith(f"{job_id}:_CNT_:"):
-                    job.reschedule(None)
-                    return

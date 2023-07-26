@@ -118,6 +118,8 @@ async def on_user_join_private(
     try:
         if not auth.get_question(event.chat.id):
             return
+        if auth.get_pending_verify(event.chat.id, user.id):
+            return
 
         await restrict_user(chat.id, user.id, True, bot)
         _, seconds = ban_time(chat.id)
@@ -139,7 +141,7 @@ async def on_user_join_private(
         )
 
         # 准备在超时后删除验证消息
-        scheduler.run_single(
+        scheduler.run_after(
             reply.delete(), 60, job_id=f"auth:delete-welcome:{chat.id}:{user.id}"
         )
 
@@ -282,6 +284,9 @@ async def on_user_join_group(event: ChatMemberUpdated, bot: Bot, scheduler: Sche
 
     try:
         if not auth.get_question(chat.id):
+            return
+        # 上次的验证还没有完成
+        if scheduler.find(f"auth:{chat.id}:{user.id}"):
             return
 
         await restrict_user(chat.id, user.id, True, bot)
