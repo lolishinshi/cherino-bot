@@ -58,12 +58,24 @@ dialog = Dialog(
         ),
         Row(
             SwitchTo(Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION),
-            SwitchTo(Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION),
-            SwitchTo(Const("修改问题"), id="edit_question", state=SettingsSG.NOT_IMPLEMENTED),
+            SwitchTo(
+                Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION
+            ),
+            SwitchTo(
+                Const("修改问题"), id="edit_question", state=SettingsSG.NOT_IMPLEMENTED
+            ),
         ),
         Row(
-            SwitchTo(Const("链接题库"), id="link_question_group", state=SettingsSG.ADD_QUESTION_GROUP),
-            SwitchTo(Const("删除题库"), id="delete_question_group", state=SettingsSG.NOT_IMPLEMENTED),
+            SwitchTo(
+                Const("链接题库"),
+                id="link_question_group",
+                state=SettingsSG.ADD_QUESTION_GROUP,
+            ),
+            SwitchTo(
+                Const("删除题库"),
+                id="delete_question_group",
+                state=SettingsSG.NOT_IMPLEMENTED,
+            ),
         ),
         Row(
             SwitchTo(Const("大清洗"), id="great_purge", state=SettingsSG.GREAT_PURGE),

@@ -20,7 +20,9 @@ class ReportCallback(CallbackData, prefix="report"):
 
 
 @router.message(Command("ban"), IsGroup(), AdminFilter())
-async def cmd_ban(message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler):
+async def cmd_ban(
+    message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler
+):
     """
     封禁用户，并删除该用户所有消息
     """
@@ -36,8 +38,12 @@ async def cmd_ban(message: Message, bot: Bot, command: CommandObject, scheduler:
         # NOTE: 没有加入群组的用户，revoke_messages 没办法删除消息，必须手动删除
         await message.delete()
         await bot.ban_chat_member(message.chat.id, user.id, revoke_messages=True)
-        reply = await message.reply("已肃清用户: {}\n理由: {}".format(user.mention_html(), reason))
-        scheduler.run_after(reply.delete(), 30, f"delete-ban:{message.chat.id}:{message.message_id}")
+        reply = await message.reply(
+            "已肃清用户: {}\n理由: {}".format(user.mention_html(), reason)
+        )
+        scheduler.run_after(
+            reply.delete(), 30, f"delete-ban:{message.chat.id}:{message.message_id}"
+        )
     except Exception as e:
         logger.warning("封禁用户失败：{}", e)
     finally:

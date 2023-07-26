@@ -38,6 +38,7 @@ class IsSpam(Filter):
     """
     判断消息是否是 spam
     """
+
     regex = re.compile("私聊|群发|签名")
 
     async def __call__(self, message: Message, bot: Bot) -> bool:

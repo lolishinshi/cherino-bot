@@ -1,11 +1,9 @@
 from asyncio.coroutines import _is_coroutine
 from datetime import datetime, timedelta
-from random import randint
-from typing import Callable
+from typing import Callable, Optional
 
 from aiogram.methods import TelegramMethod
 from apscheduler.job import Job
-from apscheduler.jobstores.base import JobLookupError
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
@@ -89,7 +87,7 @@ class Scheduler:
         if job := self.find(job_id):
             job.remove()
 
-    def find(self, job_id: str) -> Job:
+    def find(self, job_id: str) -> Optional[Job]:
         """
         查找任务
         """

@@ -116,9 +116,14 @@ async def on_user_join_private(
     chat = event.chat
 
     try:
-        if not auth.get_question(event.chat.id):
+        if not auth.get_question(chat.id):
             return
-        if auth.get_pending_verify(event.chat.id, user.id):
+        # 检查在有效期内是否存在审查未完成
+        pending_verify = auth.get_pending_verify(chat.id, user.id)
+        if (
+            pending_verify
+            and pending_verify.created_at + timedelta(seconds=60) > datetime.now()
+        ):
             return
 
         await restrict_user(chat.id, user.id, True, bot)
@@ -285,11 +290,10 @@ async def on_user_join_group(event: ChatMemberUpdated, bot: Bot, scheduler: Sche
     try:
         if not auth.get_question(chat.id):
             return
+        await restrict_user(chat.id, user.id, True, bot)
         # 上次的验证还没有完成
         if scheduler.find(f"auth:{chat.id}:{user.id}"):
             return
-
-        await restrict_user(chat.id, user.id, True, bot)
 
         question, answer_markup = get_question(chat.id, user.id)
         text = "新加入的同志 {}，请在 60s 内回答下列问题\n{}".format(
