@@ -44,7 +44,7 @@ class SqliteJobStore(BaseJobStore):
 
     def lookup_job(self, job_id):
         if job_store := JobStore.get_or_none(JobStore.id == job_id):
-            return self._reconstitute_job(job_store)
+            return self._reconstitute_job(job_store.job_state)
 
     def get_due_jobs(self, now):
         timestamp = datetime_to_utc_timestamp(now)
