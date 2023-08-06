@@ -6,7 +6,7 @@ from loguru import logger
 from cherino import crud
 from cherino.crud.setting import get_setting, Settings
 from cherino.dispatcher.admin import ReportCallback
-from cherino.filters import IsGroup, IsMember, HasLink, HasMedia, IsSpam
+from cherino.filters import IsGroup, IsMember, HasLink, HasMedia, IsSpam, IsInvalidBot
 from cherino.utils.user import get_admin_mention
 
 router = Router()
@@ -51,7 +51,7 @@ async def on_spam(message: Message, bot: Bot):
             callback_data=ReportCallback(
                 report_id=report_id,
                 action=data,
-                message=message.reply_to_message.message_id,
+                message=message.message_id,
             ).pack(),
         )
     builder.adjust(2)
@@ -61,4 +61,31 @@ async def on_spam(message: Message, bot: Bot):
         mention_admin, user.mention_html(str(user.id)), reason
     )
 
-    await message.reply_to_message.reply(text, reply_markup=builder.as_markup())
+    await message.reply(text, reply_markup=builder.as_markup())
+
+
+@router.message(IsGroup(), IsInvalidBot())
+async def on_invalid_bot_cmd(message: Message, bot: Bot):
+    user = message.from_user
+    operator = bot
+    reason = "复读无意义指令"
+
+    report_id = crud.user.report(user.id, operator.id, message.chat.id, reason).id
+    builder = InlineKeyboardBuilder()
+    for text, data in [("警告", "warn"), ("撤销", "cancel")]:
+        builder.button(
+            text=text,
+            callback_data=ReportCallback(
+                report_id=report_id,
+                action=data,
+                message=message.message_id,
+            ).pack(),
+        )
+    builder.adjust(2)
+
+    mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
+    text = "{}用户: {}\n举报人: BOT\n理由: {}".format(
+        mention_admin, user.mention_html(str(user.id)), reason
+    )
+
+    await message.reply(text, reply_markup=builder.as_markup())

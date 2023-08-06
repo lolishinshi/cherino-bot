@@ -50,3 +50,14 @@ class IsSpam(Filter):
         if IsSpam.regex.search(user.last_name or ""):
             return True
         return False
+
+
+class IsInvalidBot(Filter):
+    """
+    判断消息是否是无效的 bot 指令
+    """
+
+    async def __call__(self, message: Message, bot: Bot) -> bool:
+        if message.text in ["/challenge@Sakowbot", "/getgroupid@myidbot"]:
+            return True
+        return False
