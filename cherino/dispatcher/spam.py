@@ -65,27 +65,5 @@ async def on_spam(message: Message, bot: Bot):
 
 
 @router.message(IsGroup(), IsInvalidBot())
-async def on_invalid_bot_cmd(message: Message, bot: Bot):
-    user = message.from_user
-    operator = bot
-    reason = "复读无意义指令"
-
-    report_id = crud.user.report(user.id, operator.id, message.chat.id, reason).id
-    builder = InlineKeyboardBuilder()
-    for text, data in [("警告", "warn"), ("撤销", "cancel")]:
-        builder.button(
-            text=text,
-            callback_data=ReportCallback(
-                report_id=report_id,
-                action=data,
-                message=message.message_id,
-            ).pack(),
-        )
-    builder.adjust(2)
-
-    mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
-    text = "{}用户: {}\n举报人: BOT\n理由: {}".format(
-        mention_admin, user.mention_html(str(user.id)), reason
-    )
-
-    await message.reply(text, reply_markup=builder.as_markup())
+async def on_invalid_bot_cmd(message: Message):
+    await message.delete()
