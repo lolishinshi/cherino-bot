@@ -19,6 +19,25 @@ class ReportCallback(CallbackData, prefix="report"):
     action: str
 
 
+@router.message(Command("offtopic"), IsGroup(), AdminFilter())
+async def cmd_offtopic(message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler):
+    """
+    提示离题，并删除前面 N 条消息
+    """
+    delete_msg_cnt = 10
+    if command.args and command.args.isnumeric():
+        delete_msg_cnt = int(command.args)
+
+    reply = await bot.send_message(message.chat.id, "当前讨论内容已离题")
+    scheduler.run_after(reply.delete(), 120, f"delete-reply:{message.chat.id}:{message.message_id}")
+
+    for i in range(delete_msg_cnt):
+        try:
+            await bot.delete_message(message.chat.id, message.message_id - i)
+        except:
+            pass
+
+
 @router.message(Command("ban"), IsGroup(), AdminFilter())
 async def cmd_ban(
     message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler
