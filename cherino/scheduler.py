@@ -2,6 +2,7 @@ from asyncio.coroutines import _is_coroutine
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
+from aiogram import Bot
 from aiogram.methods import TelegramMethod
 from apscheduler.job import Job
 from apscheduler.jobstores.memory import MemoryJobStore
@@ -14,14 +15,27 @@ from cherino.crud.jobstore import SqliteJobStore
 SchedulerFunc = Callable | TelegramMethod
 
 
-class TelegramMethodWrapper:
+class TelegramMethodJob:
+    """
+    此类型的作用：
+      1. 使 TelegramMethod 可以被 apscheduler 识别为异步函数
+      2. 使 TelegramMethod 可以被序列化
+    """
     _is_coroutine = _is_coroutine
+    _bot = None
 
     def __init__(self, method: TelegramMethod):
         self.method = method
+        # Bot 实例无法别序列化，这里需要删掉
+        self.method._bot = None
 
     async def call(self):
+        self.method._bot = TelegramMethodJob._bot
         return await self.method
+
+    @classmethod
+    def set_bot(cls, bot: Optional[Bot]):
+        cls._bot = bot
 
 
 class Scheduler:
@@ -40,16 +54,6 @@ class Scheduler:
         self.scheduler.start()
         self.run_after(logger.info, 1, "test-scheduler", args=("APScheduler 工作中",))
 
-    @staticmethod
-    def _wrap_func(func: SchedulerFunc):
-        """
-        TelegramMethod 是 awaitable 的，但是 apscheduler 只会根据 iscoroutinefunction 的结果来判断是否是异步函数
-        """
-        if isinstance(func, TelegramMethod):
-            return TelegramMethodWrapper(func)
-        else:
-            return func
-
     def run_single(
         self, func: SchedulerFunc, seconds: int, job_id: str, *args, **kwargs
     ):
@@ -67,7 +71,7 @@ class Scheduler:
         """
         if isinstance(func, TelegramMethod):
             kwargs["jobstore"] = "sqlite"
-            func = TelegramMethodWrapper(func).call
+            func = TelegramMethodJob(func).call
         if not kwargs.get("name"):
             kwargs["name"] = job_id
         self.scheduler.add_job(

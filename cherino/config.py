@@ -2,7 +2,7 @@ from typing import Optional
 from pathlib import Path
 
 import tomlkit
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):

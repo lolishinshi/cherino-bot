@@ -16,6 +16,9 @@ FROM python:3.11
 
 WORKDIR /app
 
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN echo "Asia/Shanghai" > /etc/timezone
+
 ENV PYTHONPATH=/app/pkgs
 COPY --from=builder /app/__pypackages__/3.11/lib /app/pkgs
 

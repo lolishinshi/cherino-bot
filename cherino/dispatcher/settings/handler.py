@@ -5,7 +5,7 @@ from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import ManagedCheckboxAdapter, Button
+from aiogram_dialog.widgets.kbd import ManagedCheckbox, Button
 from loguru import logger
 
 from cherino.crud import auth
@@ -15,7 +15,7 @@ from cherino.utils.message import add_question_from_message
 
 
 async def on_state_changed(
-    event: CallbackQuery, checkbox: ManagedCheckboxAdapter, manager: DialogManager
+    event: CallbackQuery, checkbox: ManagedCheckbox, manager: DialogManager
 ):
     key = Settings(checkbox.widget.widget_id)
     value = checkbox.is_checked()
@@ -92,7 +92,7 @@ async def on_click_cancel(
 async def on_dialog_start(data, manager: DialogManager):
     for key in Settings.__members__.values():
         checkbox = manager.find(key)
-        if isinstance(checkbox, ManagedCheckboxAdapter):
+        if isinstance(checkbox, ManagedCheckbox):
             value = get_setting(manager.event.chat.id, key)
             checkbox.widget.set_widget_data(manager, value)
 
@@ -100,9 +100,8 @@ async def on_dialog_start(data, manager: DialogManager):
 async def on_select_delete_question(
     c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str
 ):
-    question = auth.get_all_questions(c.message.chat.id)[int(item_id) - 1]
-    logger.info("删除问题：{}", question)
-    auth.delete_question(c.message.chat.id, question.id)
+    logger.info("删除问题：{}", item_id)
+    auth.delete_question(c.message.chat.id, int(item_id))
 
 
 async def on_click_confirm_purge(
