@@ -157,11 +157,12 @@ async def callback_report_ban(
     try:
         crud.user.handle_report(callback_data.report_id, query.from_user.id, "ban")
         await query.message.chat.ban(report.user)
-        await query.message.chat.delete_message(callback_data.message)
         await query.message.edit_text(
             "已肃清用户: {}\n理由: {}".format(report.user, report.reason)
         )
         scheduler.run_after(query.message.delete(), 10, f"{query.message.message_id}")
+        # 这条消息可能会被删除，因此放在最后面
+        await query.message.chat.delete_message(callback_data.message)
     except Exception as e:
         logger.warning("处理举报回调失败：{}", e)
 
