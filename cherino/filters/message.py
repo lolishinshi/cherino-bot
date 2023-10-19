@@ -58,6 +58,6 @@ class IsInvalidBot(Filter):
     """
 
     async def __call__(self, message: Message, bot: Bot) -> bool:
-        if message.text in ["/challenge@Sakowbot", "/getgroupid@myidbot", "/best@crypko_bot"]:
+        if message.text in ["/challenge@Sakowbot", "/getgroupid@myidbot", "/best@crypko_bot", "/upload@crypko_bot"]:
             return True
         return False

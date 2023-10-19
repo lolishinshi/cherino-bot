@@ -1,10 +1,10 @@
-from peewee import Model, FloatField, TextField, BlobField
+from peewee import Model, FloatField, BlobField, CharField
 
 from cherino.database import db
 
 
 class JobStore(Model):
-    id = TextField(primary_key=True)
+    id = CharField(primary_key=True, max_length=255)
     next_run_time = FloatField(index=True, null=True)
     job_state = BlobField()
 

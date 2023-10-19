@@ -2,10 +2,11 @@ version: "3.3"
 
 services:
   cherino:
-    build: .
+    image: aloxaf/cherino:0.4.0
+    container_name: cherino
     restart: unless-stopped
     volumes:
       - ./config.toml:/app/config.toml
-      - ./db.sqlite:/app/db.sqlite
-      - ./db.sqlite-shm:/app/db.sqlite-shm
-      - ./db.sqlite-wal:/app/db.sqlite-wal
+    logging:
+      options:
+        max-size: "128m"

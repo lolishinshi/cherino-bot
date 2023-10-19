@@ -2,14 +2,13 @@ from asyncio.coroutines import _is_coroutine
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
+from cherino.config import CONFIG
 from aiogram import Bot
 from aiogram.methods import TelegramMethod
 from apscheduler.job import Job
-from apscheduler.jobstores.memory import MemoryJobStore
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
-
-from cherino.crud.jobstore import SqliteJobStore
 
 
 SchedulerFunc = Callable | TelegramMethod
@@ -40,8 +39,7 @@ class TelegramMethodJob:
 
 class Scheduler:
     jobstores = {
-        "sqlite": SqliteJobStore(),
-        "default": MemoryJobStore(),
+        "default": SQLAlchemyJobStore(CONFIG.db_url.replace('mysql', 'mysql+pymysql')),
     }
     job_defaults = {
         "misfire_grace_time": 15 * 60,
@@ -52,7 +50,6 @@ class Scheduler:
             jobstores=self.jobstores, job_defaults=self.job_defaults
         )
         self.scheduler.start()
-        self.run_after(logger.info, 1, "test-scheduler", args=("APScheduler 工作中",))
 
     def run_single(
         self, func: SchedulerFunc, seconds: int, job_id: str, *args, **kwargs
@@ -70,7 +67,6 @@ class Scheduler:
         若干秒后执行命令，如果已经存在相同 job_id 的任务，前一个任务会被取消
         """
         if isinstance(func, TelegramMethod):
-            kwargs["jobstore"] = "sqlite"
             func = TelegramMethodJob(func).call
         if not kwargs.get("name"):
             kwargs["name"] = job_id
@@ -96,8 +92,6 @@ class Scheduler:
         查找任务
         """
         if job := self.scheduler.get_job(job_id):
-            return job
-        if job := self.scheduler.get_job(job_id, "sqlite"):
             return job
 
     def trigger(self, job_id: str):

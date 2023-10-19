@@ -1,10 +1,10 @@
-from peewee import Model, TextField
+from peewee import Model, TextField, CharField
 
 from cherino.database import db
 
 
 class State(Model):
-    key = TextField(primary_key=True)
+    key = CharField(primary_key=True, max_length=255)
     value = TextField()
 
     class Meta:

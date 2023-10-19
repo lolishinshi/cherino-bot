@@ -3,7 +3,7 @@ import logging
 
 from aiogram import Bot
 
-from cherino.logging import setup_logging
+from cherino.log import setup_logging
 from cherino.config import CONFIG
 from cherino.dispatcher import dp
 from cherino.scheduler import Scheduler, TelegramMethodJob
