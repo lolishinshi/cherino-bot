@@ -1,5 +1,5 @@
 from typing import Optional
-
+from loguru import logger
 from peewee import Case, fn
 
 from cherino.database.models import (
@@ -78,14 +78,15 @@ def get_question(chat_id: int) -> Optional[tuple[Question, Answer]]:
             Question.select()
             .join(GroupQuestion, on=(Question.group == GroupQuestion.questions))
             .where(GroupQuestion.group == chat_id)
-            .order_by(fn.Random())
+            .order_by(fn.Rand())
             .limit(1)
             .get()
         )
         answers = (
-            Answer.select().where(Answer.question == question.id).order_by(fn.Random())
+            Answer.select().where(Answer.question == question.id).order_by(fn.Rand())
         )
     except:
+        logger.exception("获取入群问题失败")
         return None
     return question, answers
 
