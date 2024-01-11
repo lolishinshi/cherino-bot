@@ -58,6 +58,27 @@ class IsInvalidBot(Filter):
     """
 
     async def __call__(self, message: Message, bot: Bot) -> bool:
-        if message.text in ["/challenge@Sakowbot", "/getgroupid@myidbot", "/best@crypko_bot"]:
+        if message.text in [
+            "/challenge@Sakowbot",
+            "/getgroupid@myidbot",
+            "/best@crypko_bot",
+        ]:
             return True
+        return False
+
+
+class IsViaBot(Filter):
+    """
+    判断消息是否是 inline message
+    """
+
+    def __init__(self, bot_name: list[str] = None):
+        self.bot_name = bot_name
+
+    async def __call__(self, message: Message) -> bool:
+        if message.via_bot:
+            if self.bot_name is None:
+                return True
+            if message.via_bot.username in self.bot_name:
+                return True
         return False

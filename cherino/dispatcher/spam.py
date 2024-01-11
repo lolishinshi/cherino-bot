@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import F, Router, Bot
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -6,7 +8,15 @@ from loguru import logger
 from cherino import crud
 from cherino.crud.setting import get_setting, Settings
 from cherino.dispatcher.admin import ReportCallback
-from cherino.filters import IsGroup, IsMember, HasLink, HasMedia, IsSpam, IsInvalidBot
+from cherino.filters import (
+    IsGroup,
+    IsMember,
+    HasLink,
+    HasMedia,
+    IsSpam,
+    IsInvalidBot,
+    IsViaBot,
+)
 from cherino.utils.user import get_admin_mention
 
 router = Router()
@@ -66,4 +76,10 @@ async def on_spam(message: Message, bot: Bot):
 
 @router.message(IsGroup(), IsInvalidBot())
 async def on_invalid_bot_cmd(message: Message):
+    await message.delete()
+
+
+@router.message(IsGroup(), IsViaBot("jerryxiaobot"))
+async def on_inline_message(message: Message):
+    await asyncio.sleep(30)
     await message.delete()

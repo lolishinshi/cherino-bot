@@ -1,2 +1,2 @@
 from .chat import AdminFilter, IsGroup, MemberJoin, IsMember
-from .message import HasLink, HasMedia, IsSpam, IsInvalidBot
+from .message import HasLink, HasMedia, IsSpam, IsInvalidBot, IsViaBot
