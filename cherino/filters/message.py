@@ -14,7 +14,7 @@ class HasLink(Filter):
     async def __call__(self, message: Message) -> bool:
         if message.text and ("http://" in message.text or "https://" in message.text):
             return True
-        if HasLink.MENTION_REGEX.search(message.text):
+        if message.text and HasLink.MENTION_REGEX.search(message.text):
             return True
         return False
 
@@ -49,36 +49,4 @@ class IsSpam(Filter):
             return True
         if IsSpam.regex.search(user.last_name or ""):
             return True
-        return False
-
-
-class IsInvalidBot(Filter):
-    """
-    判断消息是否是无效的 bot 指令
-    """
-
-    async def __call__(self, message: Message, bot: Bot) -> bool:
-        if message.text in [
-            "/challenge@Sakowbot",
-            "/getgroupid@myidbot",
-            "/best@crypko_bot",
-        ]:
-            return True
-        return False
-
-
-class IsViaBot(Filter):
-    """
-    判断消息是否是 inline message
-    """
-
-    def __init__(self, bot_name: list[str] = None):
-        self.bot_name = bot_name
-
-    async def __call__(self, message: Message) -> bool:
-        if message.via_bot:
-            if self.bot_name is None:
-                return True
-            if message.via_bot.username in self.bot_name:
-                return True
         return False

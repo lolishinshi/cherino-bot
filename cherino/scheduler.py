@@ -21,6 +21,7 @@ class TelegramMethodJob:
       1. 使 TelegramMethod 可以被 apscheduler 识别为异步函数
       2. 使 TelegramMethod 可以被序列化
     """
+
     _is_coroutine = _is_coroutine
     _bot = None
 

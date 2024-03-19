@@ -28,7 +28,9 @@ router.callback_query.filter(IsGroup(), AdminFilter())
 
 dialog = Dialog(
     Window(
-        Const("同志，欢迎来到设置页面\n设置过程中请不要输入其他命令或消息，否则视为退出设置模式"),
+        Const(
+            "同志，欢迎来到设置页面\n设置过程中请不要输入其他命令或消息，否则视为退出设置模式"
+        ),
         Row(
             Checkbox(
                 Const("允许加入 - 是"),
@@ -57,7 +59,9 @@ dialog = Dialog(
             ),
         ),
         Row(
-            SwitchTo(Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION),
+            SwitchTo(
+                Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION
+            ),
             SwitchTo(
                 Const("删除问题"), id="delete_question", state=SettingsSG.DEL_QUESTION
             ),
@@ -79,7 +83,9 @@ dialog = Dialog(
         ),
         Row(
             SwitchTo(Const("大清洗"), id="great_purge", state=SettingsSG.GREAT_PURGE),
-            SwitchTo(Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS),
+            SwitchTo(
+                Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS
+            ),
         ),
         Cancel(Const("完成"), on_click=on_click_cancel),
         MessageInput(input_nothing_handler),
@@ -93,7 +99,9 @@ dialog = Dialog(
         state=SettingsSG.EDIT_BAN_TIME,
     ),
     Window(
-        Const("请回复需要添加的问题，格式如下：\n问题描述\n正确答案\n错误答案1\n错误答案2"),
+        Const(
+            "请回复需要添加的问题，格式如下：\n问题描述\n正确答案\n错误答案1\n错误答案2"
+        ),
         SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
         MessageInput(input_add_question),
         state=SettingsSG.ADD_QUESTION,
@@ -126,9 +134,13 @@ dialog = Dialog(
         state=SettingsSG.ANSWER_STATS,
     ),
     Window(
-        Jinja("共扫描 {{count}} 人，以下是需要被清洗的人员名单，一分钟后可以重新加入\n<pre>{{ purge_list }}</pre>"),
+        Jinja(
+            "共扫描 {{count}} 人，以下是需要被清洗的人员名单，一分钟后可以重新加入\n<pre>{{ purge_list }}</pre>"
+        ),
         Row(
-            Button(Const("确认清洗"), id="confirm_purge", on_click=on_click_confirm_purge),
+            Button(
+                Const("确认清洗"), id="confirm_purge", on_click=on_click_confirm_purge
+            ),
             SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
         ),
         MessageInput(input_nothing_handler),

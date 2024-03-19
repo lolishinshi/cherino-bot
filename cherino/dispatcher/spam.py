@@ -14,8 +14,6 @@ from cherino.filters import (
     HasLink,
     HasMedia,
     IsSpam,
-    IsInvalidBot,
-    IsViaBot,
 )
 from cherino.utils.user import get_admin_mention
 
@@ -31,7 +29,9 @@ async def on_nonauth_media(message: Message):
     """
     没有加入群组的用户，禁止发送媒体
     """
-    logger.info("删除用户 {} 的 {} 类型消息", message.from_user.id, message.content_type)
+    logger.info(
+        "删除用户 {} 的 {} 类型消息", message.from_user.id, message.content_type
+    )
     await message.delete()
 
 
@@ -72,14 +72,3 @@ async def on_spam(message: Message, bot: Bot):
     )
 
     await message.reply(text, reply_markup=builder.as_markup())
-
-
-@router.message(IsGroup(), IsInvalidBot())
-async def on_invalid_bot_cmd(message: Message):
-    await message.delete()
-
-
-@router.message(IsGroup(), IsViaBot("jerryxiaobot"))
-async def on_inline_message(message: Message):
-    await asyncio.sleep(30)
-    await message.delete()

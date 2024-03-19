@@ -141,7 +141,9 @@ async def on_user_join_private(
 
         reply = await bot.send_message(
             chat.id,
-            "新加入的同志 {}，请在 60s 内点击下方按钮并完成审查".format(user.mention_html()),
+            "新加入的同志 {}，请在 60s 内点击下方按钮并完成审查".format(
+                user.mention_html()
+            ),
             reply_markup=builder.as_markup(),
         )
 
@@ -228,7 +230,9 @@ async def callback_auth_private(
         )
         if not success:
             timestr, timeseconds = ban_time(callback_data.group)
-            await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
+            await query.answer(
+                f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。"
+            )
             await bot.ban_chat_member(
                 callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
             )
@@ -351,7 +355,9 @@ async def callback_auth_group(
         )
         if not success:
             timestr, timeseconds = ban_time(query.message.chat.id)
-            await query.answer(f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。")
+            await query.answer(
+                f"很抱歉，回答错误，您将被移除本群。请 {timestr} 后再重试。"
+            )
             await bot.ban_chat_member(
                 callback_data.group, query.from_user.id, timedelta(seconds=timeseconds)
             )

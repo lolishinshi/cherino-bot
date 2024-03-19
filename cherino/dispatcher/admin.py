@@ -20,7 +20,9 @@ class ReportCallback(CallbackData, prefix="report"):
 
 
 @router.message(Command("offtopic"), IsGroup(), AdminFilter())
-async def cmd_offtopic(message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler):
+async def cmd_offtopic(
+    message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler
+):
     """
     提示离题，并删除前面 N 条消息
     """
@@ -29,7 +31,9 @@ async def cmd_offtopic(message: Message, bot: Bot, command: CommandObject, sched
         delete_msg_cnt = int(command.args)
 
     reply = await bot.send_message(message.chat.id, "当前讨论内容已离题")
-    scheduler.run_after(reply.delete(), 120, f"delete-reply:{message.chat.id}:{message.message_id}")
+    scheduler.run_after(
+        reply.delete(), 120, f"delete-reply:{message.chat.id}:{message.message_id}"
+    )
 
     for i in range(delete_msg_cnt):
         try:
@@ -92,7 +96,9 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
         else:
             crud.user.ban(user.id, operator.id, message.chat.id, "警告次数达到上限")
             await bot.ban_chat_member(message.chat.id, user.id)
-            await message.reply("用户 {} 警告次数达到上限，已被肃清".format(user.mention_html()))
+            await message.reply(
+                "用户 {} 警告次数达到上限，已被肃清".format(user.mention_html())
+            )
 
         await message.reply_to_message.delete()
     except Exception as e:
@@ -185,14 +191,21 @@ async def callback_report_warn(
         )
         if warn_cnt < 3:
             await query.message.edit_text(
-                "用户 {} 已被警告 {}/3 次\n理由: {}".format(report.user, warn_cnt, report.reason)
+                "用户 {} 已被警告 {}/3 次\n理由: {}".format(
+                    report.user, warn_cnt, report.reason
+                )
             )
         else:
             crud.user.ban(
-                report.user, query.from_user.id, query.message.chat.id, "警告次数达到上限"
+                report.user,
+                query.from_user.id,
+                query.message.chat.id,
+                "警告次数达到上限",
             )
             await query.message.chat.ban(report.user)
-            await query.message.edit_text("用户 {} 警告次数达到上限，已被肃清".format(report.user))
+            await query.message.edit_text(
+                "用户 {} 警告次数达到上限，已被肃清".format(report.user)
+            )
         scheduler.run_after(query.message.delete(), 10, f"{query.message.message_id}")
     except Exception as e:
         logger.warning("处理举报回调失败：{}", e)
