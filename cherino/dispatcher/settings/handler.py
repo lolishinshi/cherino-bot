@@ -102,16 +102,3 @@ async def on_select_delete_question(
 ):
     logger.info("删除问题：{}", item_id)
     auth.delete_question(c.message.chat.id, int(item_id))
-
-
-async def on_click_confirm_purge(
-    c: CallbackQuery, button: Button, manager: DialogManager
-):
-    from cherino.pyrogram import get_chat_members
-
-    bot: Bot = manager.middleware_data["bot"]
-    async for user in get_chat_members(c.message.chat.id):
-        _, correct = auth.get_user_answer_stats(c.message.chat.id, user.id)
-        if correct == 0:
-            await bot.ban_chat_member(c.message.chat.id, user.id, timedelta(minutes=1))
-            logger.info("清理用户：{} {}", c.message.chat.id, user.id)

@@ -80,11 +80,10 @@ dialog = Dialog(
                 id="delete_question_group",
                 state=SettingsSG.NOT_IMPLEMENTED,
             ),
-        ),
-        Row(
-            SwitchTo(Const("大清洗"), id="great_purge", state=SettingsSG.GREAT_PURGE),
             SwitchTo(
-                Const("回答情况统计"), id="answer_stats", state=SettingsSG.ANSWER_STATS
+                Const("回答情况统计"),
+                id="answer_stats",
+                state=SettingsSG.ANSWER_STATS,
             ),
         ),
         Cancel(Const("完成"), on_click=on_click_cancel),
@@ -132,20 +131,6 @@ dialog = Dialog(
         MessageInput(input_nothing_handler),
         getter=answer_stats_getter,
         state=SettingsSG.ANSWER_STATS,
-    ),
-    Window(
-        Jinja(
-            "共扫描 {{count}} 人，以下是需要被清洗的人员名单，一分钟后可以重新加入\n<pre>{{ purge_list }}</pre>"
-        ),
-        Row(
-            Button(
-                Const("确认清洗"), id="confirm_purge", on_click=on_click_confirm_purge
-            ),
-            SwitchTo(Const("返回"), id="backward", state=SettingsSG.MAIN),
-        ),
-        MessageInput(input_nothing_handler),
-        getter=purge_list_getter,
-        state=SettingsSG.GREAT_PURGE,
     ),
     Window(
         Const("请回复需要绑定的题库所属的群组 ID"),

@@ -18,7 +18,6 @@ DEFAULT_VALUE = {
     Settings.AUTH_IN_GROUP: True,
     Settings.BAN_TIME: "1h",
     Settings.ALLOW_NOAUTH_MEDIA: False,
-    Settings.GREAT_PURGE: False,
 }
 
 

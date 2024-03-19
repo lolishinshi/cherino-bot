@@ -1,6 +1,6 @@
 [project]
 name = "cherino"
-version = "0.3.5"
+version = "0.4.1"
 description = "Telegram 群组管理 bot"
 authors = [
     {name = "Aloxaf", email = "Aloxafx@gmail.com"},
@@ -17,7 +17,6 @@ dependencies = [
     "peewee-migrate>=1.10.1",
     "pytimeparse>=1.1.8",
     "aiogram-dialog>=2.0.0",
-    "pyrogram>=2.0.106",
     "pydantic-settings>=2.0.3",
 ]
 requires-python = ">=3.10"

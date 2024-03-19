@@ -39,10 +39,6 @@ def auth_in_group(event: ChatMemberUpdated) -> bool:
     return get_setting(event.chat.id, Settings.AUTH_IN_GROUP)
 
 
-def great_purge(message: Message) -> bool:
-    return get_setting(message.chat.id, Settings.GREAT_PURGE)
-
-
 def ban_time(chat_id: int) -> tuple[str, int]:
     t = get_setting(chat_id, Settings.BAN_TIME)
     return t, parsetime(t)
