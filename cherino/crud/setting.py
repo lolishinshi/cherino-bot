@@ -11,6 +11,7 @@ class Settings(StrEnum):
     BAN_TIME = "ban_time"
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
     GREAT_PURGE = "great_purge"  # 废弃
+    CHECK_PORN = "check_porn"
 
 
 DEFAULT_VALUE = {
@@ -18,6 +19,7 @@ DEFAULT_VALUE = {
     Settings.AUTH_IN_GROUP: True,
     Settings.BAN_TIME: "1h",
     Settings.ALLOW_NOAUTH_MEDIA: False,
+    Settings.CHECK_PORN: False,
 }
 
 

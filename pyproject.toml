@@ -1,6 +1,6 @@
 [project]
 name = "cherino"
-version = "0.4.1"
+version = "0.5.0"
 description = "Telegram 群组管理 bot"
 authors = [
     {name = "Aloxaf", email = "Aloxafx@gmail.com"},
@@ -18,6 +18,7 @@ dependencies = [
     "pytimeparse>=1.1.8",
     "aiogram-dialog>=2.0.0",
     "pydantic-settings>=2.0.3",
+    "aiohttp>=3.8.6",
 ]
 requires-python = ">=3.10"
 license = {text = "MIT"}

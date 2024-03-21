@@ -14,6 +14,7 @@ from .models import (
     GroupQuestion,
     State,
     JobStore,
+    UserLastSeen,
 )
 
 
@@ -29,6 +30,7 @@ def init(db_: Database):
             GroupQuestion,
             State,
             JobStore,
+            UserLastSeen,
         ]
     )
     Router(db_, migrate_dir=Path(__file__).parent / "migrations").run()

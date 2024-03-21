@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from cherino.database.models import ActionHistory
+from peewee import fn
+
+from cherino.database import ActionHistory, AnswerHistory, UserLastSeen
 
 
 def warn(user: int, operator: int, group: int, reason: Optional[str] = None) -> int:
@@ -65,3 +67,31 @@ def handle_report(report_id: int, operator: int, action: str) -> Optional[int]:
         return warn(
             old_report.user, operator, old_report.group, reason=f"report:{report_id}"
         )
+
+
+def max_user_id() -> int:
+    """
+    获取有记录的最大用户 ID
+    """
+    return AnswerHistory.select(fn.MAX(AnswerHistory.user)).scalar()
+
+
+def get_user_last_seen(user: int, chat_id: int) -> Optional[UserLastSeen]:
+    """
+    获取用户最后一次出现的时间
+    """
+    return UserLastSeen.get_or_none(id=user, chat_id=chat_id)
+
+
+def update_user_last_seen(user: int, chat_id: int):
+    """
+    更新用户最后一次出现的时间，如果与当前时间不在同一天，则活跃天数 +1
+    """
+    user_last_seen = get_user_last_seen(user, chat_id)
+    if user_last_seen is None:
+        UserLastSeen.create(id=user, last_seen=datetime.now(), chat_id=chat_id)
+    else:
+        if user_last_seen.last_seen.date() != datetime.now().date():
+            user_last_seen.active_days += 1
+        user_last_seen.last_seen = datetime.now()
+        user_last_seen.save()

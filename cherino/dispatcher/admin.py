@@ -7,7 +7,9 @@ from loguru import logger
 
 from cherino import crud
 from cherino.filters import AdminFilter, IsGroup
+from cherino.recent_message import RecentMessage
 from cherino.scheduler import Scheduler
+from cherino.utils.message import delete_all_message
 from cherino.utils.user import get_admin, get_admin_mention
 
 router = Router()
@@ -44,10 +46,14 @@ async def cmd_offtopic(
 
 @router.message(Command("ban"), IsGroup(), AdminFilter())
 async def cmd_ban(
-    message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler
+    message: Message,
+    bot: Bot,
+    command: CommandObject,
+    scheduler: Scheduler,
+    recent_message: RecentMessage,
 ):
     """
-    封禁用户，并删除该用户所有消息
+    封禁用户，并删除该用户最近消息
     """
     if not message.reply_to_message:
         return
@@ -58,8 +64,6 @@ async def cmd_ban(
 
     try:
         crud.user.ban(user.id, operator.id, message.chat.id, reason)
-        # NOTE: 没有加入群组的用户，revoke_messages 没办法删除消息，必须手动删除
-        await message.delete()
         await bot.ban_chat_member(message.chat.id, user.id, revoke_messages=True)
         reply = await message.reply(
             "已肃清用户: {}\n理由: {}".format(user.mention_html(), reason)
@@ -67,6 +71,7 @@ async def cmd_ban(
         scheduler.run_after(
             reply.delete(), 30, f"delete-ban:{message.chat.id}:{message.message_id}"
         )
+        await delete_all_message(bot, message.chat.id, user.id, recent_message)
     except Exception as e:
         logger.warning("封禁用户失败：{}", e)
     finally:
@@ -153,7 +158,11 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
     ReportCallback.filter(F.action == "ban"), IsGroup(), AdminFilter()
 )
 async def callback_report_ban(
-    query: CallbackQuery, callback_data: ReportCallback, scheduler: Scheduler
+    bot: Bot,
+    query: CallbackQuery,
+    callback_data: ReportCallback,
+    scheduler: Scheduler,
+    recent_message: RecentMessage,
 ):
     """
     处理举报回调
@@ -167,8 +176,9 @@ async def callback_report_ban(
             "已肃清用户: {}\n理由: {}".format(report.user, report.reason)
         )
         scheduler.run_after(query.message.delete(), 10, f"{query.message.message_id}")
-        # 这条消息可能会被删除，因此放在最后面
-        await query.message.chat.delete_message(callback_data.message)
+        await delete_all_message(
+            bot, query.message.chat.id, report.user, recent_message
+        )
     except Exception as e:
         logger.warning("处理举报回调失败：{}", e)
 

@@ -59,6 +59,14 @@ dialog = Dialog(
             ),
         ),
         Row(
+            Checkbox(
+                Const(f"检测真人色情 - 是"),
+                Const(f"检测真人色情 - 否"),
+                id=Settings.CHECK_PORN,
+                on_state_changed=on_state_changed,
+            ),
+        ),
+        Row(
             SwitchTo(
                 Const("添加问题"), id="add_question", state=SettingsSG.ADD_QUESTION
             ),
