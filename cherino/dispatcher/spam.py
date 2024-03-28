@@ -83,6 +83,9 @@ async def on_spam(message: Message, bot: Bot):
     await message.reply(text, reply_markup=builder.as_markup())
 
 
+# TODO: 过滤高风险用户的广告
+
+
 @router.message(IsGroup(), HasMedia(), F.func(check_porn))
 async def on_porn_check(message: Message, bot: Bot, recent_message: RecentMessage):
     """
@@ -91,6 +94,7 @@ async def on_porn_check(message: Message, bot: Bot, recent_message: RecentMessag
     chat = message.chat
     user = message.from_user
 
+    # TODO: 应该写成 filter
     # 获取图片为 porn 的可能性
     photo = await download_image(bot, message)
     nsfw_result = await detect_nsfw(photo)
@@ -114,7 +118,7 @@ async def on_porn_check(message: Message, bot: Bot, recent_message: RecentMessag
     last_seen = crud.user.get_user_last_seen(user.id, chat.id)
     if last_seen is None:
         risk_level += 2
-    if last_seen.active_days < 3:
+    elif last_seen.active_days < 3:
         risk_level += 1
 
     logger.info("用户 {} 风险等级: {}，色情等级：{}", user.id, risk_level, porn_level)

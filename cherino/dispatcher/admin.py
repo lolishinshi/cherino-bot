@@ -158,8 +158,8 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
     ReportCallback.filter(F.action == "ban"), IsGroup(), AdminFilter()
 )
 async def callback_report_ban(
-    bot: Bot,
     query: CallbackQuery,
+    bot: Bot,
     callback_data: ReportCallback,
     scheduler: Scheduler,
     recent_message: RecentMessage,
