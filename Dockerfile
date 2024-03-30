@@ -12,7 +12,7 @@ RUN pdm sync --prod --no-editable
 COPY cherino /app/cherino
 RUN pdm sync --prod --no-editable
 
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 

@@ -44,6 +44,19 @@ async def cmd_offtopic(
             pass
 
 
+@router.message(Command("mute"), IsGroup(), AdminFilter())
+async def cmd_mute(
+    message: Message, bot: Bot, command: CommandObject, scheduler: Scheduler
+):
+    """
+    将用户禁言 60 分钟以内
+    """
+    if not message.reply_to_message:
+        return
+
+    # TODO
+
+
 @router.message(Command("ban"), IsGroup(), AdminFilter())
 async def cmd_ban(
     message: Message,
@@ -89,6 +102,9 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
     user = message.reply_to_message.from_user
     operator = message.from_user
     reason = command.args
+
+    if user.id in await get_admin(message.chat.id, bot):
+        return
 
     try:
         warn_cnt = crud.user.warn(user.id, operator.id, message.chat.id, reason)
@@ -155,7 +171,9 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
 
 
 @router.callback_query(
-    ReportCallback.filter(F.action == "ban"), IsGroup(), AdminFilter()
+    ReportCallback.filter(F.action == "ban"),
+    IsGroup(),
+    AdminFilter(),
 )
 async def callback_report_ban(
     query: CallbackQuery,

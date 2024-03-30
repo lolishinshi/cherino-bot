@@ -10,7 +10,7 @@ class Config(BaseSettings):
     api_hash: Optional[str]
     token: str
     db_url: str
-    nsfw_api: Optional[str]
+    nsfw_api: Optional[str] = None
 
 
 CONFIG = Config(**tomlkit.loads(Path("config.toml").read_text()))

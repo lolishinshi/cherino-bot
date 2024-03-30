@@ -1,9 +1,10 @@
 import asyncache
 from aiogram import Bot
-from aiogram.types import ChatPermissions
+from aiogram.types import ChatPermissions, ChatMemberAdministrator, ChatMemberOwner
 from aiogram.utils import link, markdown
 from cachetools import TTLCache
 from enum import IntEnum
+from typing import Optional, Callable
 
 
 class SpecialUserID(IntEnum):
@@ -21,12 +22,26 @@ class SpecialUserID(IntEnum):
     """用频道身份发言"""
 
 
+async def get_admin(
+    chat_id: int,
+    bot: Bot,
+    filter: Optional[Callable[[ChatMemberAdministrator], bool]] = None,
+) -> list[int]:
+    admins = await get_admin_impl(chat_id, bot)
+    if not filter:
+        admins_id = [admin.user.id for admin in admins]
+    else:
+        admins_id = [admin.user.id for admin in admins if isinstance(admin, ChatMemberOwner) or filter(admin)]
+    admins_id.append(1087968824)
+    return admins_id
+
+
 @asyncache.cached(TTLCache(maxsize=128, ttl=600))
-async def get_admin(chat_id: int, bot: Bot) -> list[int]:
-    admins = await bot.get_chat_administrators(chat_id)
-    result = [1087968824]  # 匿名管理
-    result.extend([admin.user.id for admin in admins if not admin.user.is_bot])
-    return result
+async def get_admin_impl(chat_id: int, bot: Bot) -> list[ChatMemberAdministrator]:
+    """
+    获取管理员列表，缓存 600s
+    """
+    return await bot.get_chat_administrators(chat_id)
 
 
 async def get_admin_mention(chat_id: int, bot: Bot) -> list[str]:

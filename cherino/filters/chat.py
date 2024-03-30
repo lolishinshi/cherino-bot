@@ -2,7 +2,8 @@ from aiogram import Bot
 from aiogram.enums import ChatType
 from aiogram.filters import Filter
 from aiogram.enums import ChatMemberStatus
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ChatMemberAdministrator
+from typing import Callable, Optional
 
 from cherino.utils.user import get_admin, SpecialUserID
 
@@ -23,14 +24,27 @@ class MemberJoin(Filter):
 
 class AdminFilter(Filter):
     """
-    判断消息来源是否是管理员
+    判断消息来源是否是管理员，且拥有指定权限
+    默认筛选拥有删除消息权限的管理员
     """
+
+    def __init__(
+        self,
+        filter: Optional[
+            Callable[[ChatMemberAdministrator], bool]
+        ] = lambda x: x.can_delete_messages,
+    ):
+        self.filter = filter
 
     async def __call__(self, message: Message | CallbackQuery, bot: Bot) -> bool:
         if isinstance(message, CallbackQuery):
-            return message.from_user.id in await get_admin(message.message.chat.id, bot)
+            return message.from_user.id in await get_admin(
+                message.message.chat.id, bot, self.filter
+            )
         elif isinstance(message, Message):
-            return message.from_user.id in await get_admin(message.chat.id, bot)
+            return message.from_user.id in await get_admin(
+                message.chat.id, bot, self.filter
+            )
         raise RuntimeError("Unreachable")
 
 
