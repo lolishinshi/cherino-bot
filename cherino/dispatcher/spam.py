@@ -1,5 +1,5 @@
 from aiogram import F, Router, Bot
-from aiogram.types import Message
+from aiogram.types import Message, User, Chat
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from loguru import logger
 
@@ -83,7 +83,22 @@ async def on_spam(message: Message, bot: Bot):
     await message.reply(text, reply_markup=builder.as_markup())
 
 
-# TODO: 过滤高风险用户的广告
+@router.message(IsGroup(), HasLink())
+async def on_link(message: Message, bot: Bot, recent_message: RecentMessage):
+    """
+    检测广告
+    """
+    chat = message.chat
+    user = message.from_user
+    risk_level = await user_risk_level(user, chat)
+    if risk_level >= 3:
+        await delete_all_message(bot, chat.id, user.id, recent_message)
+        await bot.ban_chat_member(chat.id, user.id, revoke_messages=True)
+        mention_admin = "".join(await get_admin_mention(message.chat.id, bot))
+        text = "{}已肃清用户: {}\n理由: {}".format(
+            mention_admin, user.mention_html(str(user.id)), "疑似 spam"
+        )
+        await bot.send_message(chat.id, text)
 
 
 @router.message(IsGroup(), HasMedia(), F.func(check_porn))
@@ -103,23 +118,7 @@ async def on_porn_check(message: Message, bot: Bot, recent_message: RecentMessag
         return
 
     # 计算用户风险等级
-    risk_level = 0
-
-    avatar = await user.get_profile_photos(limit=1)
-    if avatar.total_count == 0:
-        risk_level += 1
-
-    max_user_id = crud.user.max_user_id()
-    if user.id > max_user_id * 0.95:
-        risk_level += 1
-    if user.id > max_user_id * 0.99:
-        risk_level += 1
-
-    last_seen = crud.user.get_user_last_seen(user.id, chat.id)
-    if last_seen is None:
-        risk_level += 2
-    elif last_seen.active_days < 3:
-        risk_level += 1
+    risk_level = await user_risk_level(user, chat)
 
     logger.info("用户 {} 风险等级: {}，色情等级：{}", user.id, risk_level, porn_level)
 
@@ -139,3 +138,26 @@ async def on_porn_check(message: Message, bot: Bot, recent_message: RecentMessag
             mention_admin, message.message_id, "疑似真人色情"
         )
         await bot.send_message(chat.id, text)
+
+
+async def user_risk_level(user: User, chat: Chat) -> int:
+    # 计算用户风险等级
+    risk_level = 0
+
+    avatar = await user.get_profile_photos(limit=1)
+    if avatar.total_count == 0:
+        risk_level += 1
+
+    max_user_id = crud.user.max_user_id()
+    if user.id > max_user_id * 0.95:
+        risk_level += 1
+    if user.id > max_user_id * 0.99:
+        risk_level += 1
+
+    last_seen = crud.user.get_user_last_seen(user.id, chat.id)
+    if last_seen is None:
+        risk_level += 2
+    elif last_seen.active_days < 3:
+        risk_level += 1
+
+    return risk_level
