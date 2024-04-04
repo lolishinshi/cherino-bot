@@ -91,6 +91,7 @@ async def on_link(message: Message, bot: Bot, recent_message: RecentMessage):
     chat = message.chat
     user = message.from_user
     risk_level = await user_risk_level(user, chat)
+    logger.info("用户 {} 风险等级: {}", user.id, risk_level)
     if risk_level >= 3:
         await delete_all_message(bot, chat.id, user.id, recent_message)
         await bot.ban_chat_member(chat.id, user.id, revoke_messages=True)

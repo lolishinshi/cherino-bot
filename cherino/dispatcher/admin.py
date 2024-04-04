@@ -103,7 +103,9 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
     operator = message.from_user
     reason = command.args
 
-    if user.id in await get_admin(message.chat.id, bot):
+    if user.id in await get_admin(
+        message.chat.id, bot, lambda x: x.can_delete_messages
+    ):
         return
 
     try:
@@ -140,7 +142,9 @@ async def cmd_report(message: Message, bot: Bot, command: CommandObject):
     operator = message.from_user
     reason = command.args
 
-    if user.id in await get_admin(message.chat.id, bot):
+    if user.id in await get_admin(
+        message.chat.id, bot, lambda x: x.can_delete_messages
+    ):
         return
 
     try:

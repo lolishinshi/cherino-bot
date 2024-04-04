@@ -21,7 +21,7 @@ class RecentMessageMiddleware(BaseMiddleware):
         event: Message,
         data: dict[str, Any],
     ):
-        if not event.from_user.is_bot:
+        if not event.from_user.is_bot and isinstance(event, Message):
             self.recent_message.add(event.chat.id, event.from_user.id, event.message_id)
             crud.user.update_user_last_seen(event.from_user.id, event.chat.id)
         data["recent_message"] = self.recent_message

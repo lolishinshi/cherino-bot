@@ -14,5 +14,7 @@ dp.include_routers(
     question.router,
     spam.router,
 )
-dp.message.outer_middleware.register(RecentMessageMiddleware())
+recent_message = RecentMessageMiddleware()
+dp.message.outer_middleware.register(recent_message)
+dp.callback_query.outer_middleware.register(recent_message)
 setup_dialogs(dp)
