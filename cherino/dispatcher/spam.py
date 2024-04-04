@@ -33,6 +33,10 @@ def check_porn(message: Message) -> bool:
     )
 
 
+def aggressive_antispam(message: Message) -> bool:
+    return get_setting(message.chat.id, Settings.AGGRESSIVE_ANTISPAM)
+
+
 @router.message(IsGroup(), ~IsMember(), HasMedia(), ~F.func(allow_nonauth_media))
 async def on_nonauth_media(message: Message):
     """
@@ -83,7 +87,7 @@ async def on_spam(message: Message, bot: Bot):
     await message.reply(text, reply_markup=builder.as_markup())
 
 
-@router.message(IsGroup(), HasLink())
+@router.message(IsGroup(), HasLink(), F.func(aggressive_antispam))
 async def on_link(message: Message, bot: Bot, recent_message: RecentMessage):
     """
     检测广告

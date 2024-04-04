@@ -12,6 +12,7 @@ class Settings(StrEnum):
     ALLOW_NOAUTH_MEDIA = "allow_nonauth_media"
     GREAT_PURGE = "great_purge"  # 废弃
     CHECK_PORN = "check_porn"
+    AGGRESSIVE_ANTISPAM = "aggressive_antispam"
 
 
 DEFAULT_VALUE = {
@@ -20,6 +21,7 @@ DEFAULT_VALUE = {
     Settings.BAN_TIME: "1h",
     Settings.ALLOW_NOAUTH_MEDIA: False,
     Settings.CHECK_PORN: False,
+    Settings.AGGRESSIVE_ANTISPAM: False,
 }
 
 

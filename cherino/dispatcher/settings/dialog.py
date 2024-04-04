@@ -65,6 +65,12 @@ dialog = Dialog(
                 id=Settings.CHECK_PORN,
                 on_state_changed=on_state_changed,
             ),
+            Checkbox(
+                Const(f"激进 AntiSpam - 是"),
+                Const(f"激进 AntiSpam - 否"),
+                id=Settings.AGGRESSIVE_ANTISPAM,
+                on_state_changed=on_state_changed,
+            ),
         ),
         Row(
             SwitchTo(
