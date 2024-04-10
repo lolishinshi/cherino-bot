@@ -3,6 +3,7 @@ from collections import defaultdict
 from typing import Any, Awaitable, Callable
 
 from aiogram import BaseMiddleware
+from aiogram.enums import ContentType
 from aiogram.types import Message
 from cherino import crud
 
@@ -21,11 +22,15 @@ class RecentMessageMiddleware(BaseMiddleware):
         event: Message,
         data: dict[str, Any],
     ):
-        if not event.from_user.is_bot and isinstance(event, Message):
+        if isinstance(event, Message):
             self.recent_message.add(event.chat.id, event.from_user.id, event.message_id)
-            crud.user.update_user_last_seen(event.from_user.id, event.chat.id)
+
         data["recent_message"] = self.recent_message
-        return await handler(event, data)
+        await handler(event, data)
+
+        if isinstance(event, Message) and event.content_type == ContentType.TEXT:
+            crud.user.update_user_last_seen(event.from_user.id, event.chat.id)
+        return
 
 
 class RecentMessage:

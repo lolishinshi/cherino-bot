@@ -80,7 +80,9 @@ def get_user_last_seen(user: int, chat_id: int) -> Optional[UserLastSeen]:
     """
     获取用户最后一次出现的时间
     """
-    return UserLastSeen.get_or_none(id=user, chat_id=chat_id)
+    return UserLastSeen.get_or_none(
+        UserLastSeen.id == user, UserLastSeen.chat_id == chat_id
+    )
 
 
 def update_user_last_seen(user: int, chat_id: int):
