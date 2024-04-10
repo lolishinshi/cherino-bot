@@ -107,13 +107,13 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
 
     try:
         warn_cnt = crud.user.warn(user.id, operator.id, message.chat.id, reason)
-        if warn_cnt < 3 and user.id not in admin_list:
+        if warn_cnt < 3:
             await message.reply(
                 "用户 {} 已被警告 {}/3 次\n理由: {}".format(
                     user.mention_html(), warn_cnt, reason
                 )
             )
-        else:
+        elif user.id not in admin_list:
             crud.user.ban(user.id, operator.id, message.chat.id, "警告次数达到上限")
             await bot.ban_chat_member(message.chat.id, user.id)
             await message.reply(
