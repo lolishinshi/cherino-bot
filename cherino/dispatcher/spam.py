@@ -151,6 +151,10 @@ async def user_risk_level(user: User, chat: Chat) -> int:
     # 计算用户风险等级
     risk_level = 0
 
+    # TODO: 处理频道身份发言，使用 bot.ban_chat_sender_chat 和 message.sender_chat 来处理
+    if user.id in [1087968824, 777000, 136817688]:
+        return 0
+
     avatar = await user.get_profile_photos(limit=1)
     if avatar.total_count == 0:
         risk_level += 1
