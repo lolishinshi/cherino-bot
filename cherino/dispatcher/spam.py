@@ -88,6 +88,7 @@ async def on_spam(message: Message, bot: Bot):
 
 
 @router.message(IsGroup(), HasLink(), F.func(aggressive_antispam))
+@router.message(IsGroup(), F.via_bot, F.func(aggressive_antispam))
 async def on_link(message: Message, bot: Bot, recent_message: RecentMessage):
     """
     检测广告

@@ -103,14 +103,11 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
     operator = message.from_user
     reason = command.args
 
-    if user.id in await get_admin(
-        message.chat.id, bot, lambda x: x.can_delete_messages
-    ):
-        return
+    admin_list = await get_admin(message.chat.id, bot, lambda x: x.can_delete_messages)
 
     try:
         warn_cnt = crud.user.warn(user.id, operator.id, message.chat.id, reason)
-        if warn_cnt < 3:
+        if warn_cnt < 3 and user.id not in admin_list:
             await message.reply(
                 "用户 {} 已被警告 {}/3 次\n理由: {}".format(
                     user.mention_html(), warn_cnt, reason
