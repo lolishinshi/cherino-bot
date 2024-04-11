@@ -206,6 +206,7 @@ async def callback_auth_private(
     """
 
     try:
+        # FIXME: 有没有确保用户连续点击选项时不会出现问题
         pending_verify = auth.get_pending_verify(
             callback_data.group, query.from_user.id
         )
@@ -343,6 +344,12 @@ async def callback_auth_group(
             await query.answer("同志，请不要干扰我们工作！")
             return
 
+        # NOTE: 此处在收到答案后，需要立即判断是否存在验证任务，并删除已存在的验证任务
+        # 这样可以防止用户快速点击多次，导致多次触发验证任务
+        if not scheduler.find(f"auth:{callback_data.group}:{query.from_user.id}"):
+            return
+        scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
+
         success = auth.add_answer(
             query.from_user.id,
             query.message.chat.id,
@@ -370,10 +377,9 @@ async def callback_auth_group(
             )
 
         await query.message.delete()
-        # 不管是否成功，都取消删除验证消息和封禁用户的任务
+        # 不管是否成功，都取消删除验证消息的任务
         scheduler.cancel(
             f"auth:delete-welcome:{query.message.chat.id}:{query.from_user.id}"
         )
-        scheduler.cancel(f"auth:{callback_data.group}:{query.from_user.id}")
     except Exception as e:
         logger.exception("入群验证回调失败: {}", e)
