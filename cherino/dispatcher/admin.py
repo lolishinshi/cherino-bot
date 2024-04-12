@@ -107,7 +107,7 @@ async def cmd_warn(message: Message, bot: Bot, command: CommandObject):
 
     try:
         warn_cnt = crud.user.warn(user.id, operator.id, message.chat.id, reason)
-        if warn_cnt < 3:
+        if warn_cnt < 3 or user.id in admin_list:
             await message.reply(
                 "用户 {} 已被警告 {}/3 次\n理由: {}".format(
                     user.mention_html(), warn_cnt, reason
